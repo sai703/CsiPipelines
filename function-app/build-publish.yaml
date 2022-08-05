@@ -1,0 +1,20 @@
+---
+parameters:
+- name: artifact_name
+  type: string
+- name: project_file
+  type: string
+- name: build_configuration
+  type: string
+  default: Release
+- name: output_dir
+  type: string
+  default: $(Build.ArtifactStagingDirectory)
+
+steps:
+  - powershell: |
+      dotnet publish ${{ parameters.project_file }} -o ${{ parameters.output_dir }} -c ${{ parameters.build_configuration }}
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: ${{ parameters.output_dir }}
+      artifact: ${{ parameters.artifact_name }}

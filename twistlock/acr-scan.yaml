@@ -1,0 +1,44 @@
+---
+parameters:
+  - name: acr_name
+    type: string
+  - name: acr_endpoint
+    type: string
+  - name: subscription_endpoint
+    type: string
+  - name: twistlock_id
+    type: string
+  - name: twistlock_password
+    type: string
+  - name: ignore_failed_scan
+    type: boolean
+    default: false
+
+steps:
+  - task: Docker@2
+    displayName: Login to ACR
+    inputs:
+      command: login
+      containerRegistry: ${{ parameters.acr_endpoint }}
+  - task: AzureCLI@2
+    displayName: Create image list
+    inputs:
+      azureSubscription: ${{ parameters.subscription_endpoint }}
+      scriptType: 'pscore'
+      scriptLocation: 'inlineScript'
+      inlineScript: |        
+        $repo_list = @(az acr repository list -n ${{ parameters.acr_name }} --output tsv)
+        
+        For ($i = 0; $i -lt $repo_list.Length; $i++) {
+          $app = $repo_list[$i].split(" ")
+          $tags = $(az acr repository show-tags -n ${{ parameters.acr_name }} --repository $app -o tsv)
+          $string= "${{ parameters.acr_name }}"+".azurecr.io"+"/"+"$app"+":" +"$tags"
+          Write-Output $string | Add-Content -Path $(System.ArtifactsDirectory)/images.txt
+        }
+  - template: /twistlock/bulk-scan.yaml@application-pipeline-templates
+    parameters:
+      acr_endpoint: ${{ parameters.acr_endpoint }}
+      twistlock_id: ${{ parameters.twistlock_id }}
+      twistlock_password: ${{ parameters.twistlock_password }}
+      ignore_failed_scan: ${{ parameters.ignore_failed_scan }}
+      image_list_file: $(System.ArtifactsDirectory)/images.txt

@@ -1,0 +1,12 @@
+# Default values for Chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+app:
+  name: example-app
+  namespace: default
+
+replicaCount: 1
+
+image:
+  repository: acrdigitalbankingebgsandboxeastus2.azurecr.io/exampleapp:latest
+  pullPolicy: Always

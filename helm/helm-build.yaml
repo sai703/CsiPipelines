@@ -1,0 +1,35 @@
+parameters:
+- name: azure_subscription_endpoint
+  type: string
+- name: azure_resource_group
+  type: string
+- name: chart_path
+  type: string
+- name: chart_name
+  type: string
+- name: azure_container_registry
+  type: string
+- name: chart_version
+  type: string
+
+steps:
+- task: HelmInstaller@1
+  displayName: Helm installer
+  inputs:
+    helmVersionToInstall: 3.6.3
+
+- task: HelmDeploy@0
+  displayName: Helm package
+  inputs:
+    command: package
+    chartPath: ${{ parameters.chart_path }}
+
+- task: Helmdeploy@0
+  displayName: Helm save
+  inputs:
+    command: save
+    chartNameForACR: ${{ parameters.chart_name }}:${{ parameters.chart_version }} 
+    chartPathForACR: ${{ parameters.chart_path }}
+    azureSubscriptionEndpointForACR: ${{ parameters.azure_subscription_endpoint }}
+    azureResourceGroupForACR: ${{ parameters.azure_resource_group }}
+    azureContainerRegistry: ${{ parameters.azure_container_registry }}

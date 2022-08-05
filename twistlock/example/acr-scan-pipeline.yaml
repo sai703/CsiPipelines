@@ -1,0 +1,30 @@
+---
+name: $(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  paths:
+    include:
+      - twistlock
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- group: twistlock 
+
+resources:
+  repositories:
+    - repository: application-pipeline-templates
+      type: git
+      name: EBG DevOps/application-pipeline-templates
+
+jobs:
+- job:
+  steps:
+  - template: /twistlock/acr-scan.yaml@application-pipeline-templates
+    parameters:
+      subscription_endpoint: CSI DevOps Sandbox(1)(ec864827-a91d-4a4b-bdec-b367150f43fa)
+      acr_name: goldenimage
+      acr_endpoint: ACRCSIDevOpsSandboxGoldenImageEastUS
+      twistlock_id: $(twistlock_id)  
+      twistlock_password: $(twistlock_password)
+      ignore_failed_scan: true

@@ -1,0 +1,33 @@
+---
+name: $(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  paths:
+    include:
+      - docker/example
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- group: twistlock 
+
+resources:
+  repositories:
+    - repository: application-pipeline-templates
+      type: git
+      name: EBG DevOps/application-pipeline-templates
+
+jobs:
+- job:
+  steps:
+  - template: /docker/docker-build.yaml@application-pipeline-templates
+    parameters:
+      container_registry: ACRDigitalBankingEBGSandboxEastUS2
+      docker_repository: alpine
+      acr_url: acrdigitalbankingebgsandboxeastus2.azurecr.io
+      dockerfile_path: $(Build.SourcesDirectory)/docker/example/Dockerfile
+      build_context: $(Build.SourcesDirectory)/docker/example
+      tag: latest
+      risk_profile: internal.headless-services.nonpci
+      twistlock_id: $(twistlock_id)  
+      twistlock_password: $(twistlock_password) 

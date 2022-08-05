@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dotnet-function-example", "dotnet-function-example.csproj", "{A1FF30C7-6D82-4108-96E2-90971B07A03C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dotnet-function-example.Test", "..\dotnet-function-example.Test\dotnet-function-example.Test.csproj", "{6DFA4823-C25F-46C3-A2AE-CF67B8720F0B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1FF30C7-6D82-4108-96E2-90971B07A03C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1FF30C7-6D82-4108-96E2-90971B07A03C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1FF30C7-6D82-4108-96E2-90971B07A03C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1FF30C7-6D82-4108-96E2-90971B07A03C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DFA4823-C25F-46C3-A2AE-CF67B8720F0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DFA4823-C25F-46C3-A2AE-CF67B8720F0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DFA4823-C25F-46C3-A2AE-CF67B8720F0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DFA4823-C25F-46C3-A2AE-CF67B8720F0B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {388A8027-799D-4CA0-B9D4-C02A7D4F74F8}
+	EndGlobalSection
+EndGlobal

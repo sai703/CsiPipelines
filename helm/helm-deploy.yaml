@@ -1,0 +1,42 @@
+parameters:
+- name: kubernetes_service_endpoint
+  type: string
+- name: azure_resource_group
+  type: string
+- name: kubernetes_cluster
+  type: string
+- name: azure_container_registry
+  type: string
+- name: acr_username
+  type: string
+- name: acr_password
+  type: string
+- name: chart_name
+  type: string
+- name: chart_version
+  type: string
+- name: acr_tenant
+  type: string
+- name: release_name
+  type: string
+- name: namespace
+  type: string
+  default: default
+
+steps:
+- bash: |
+    helm registry login ${{ parameters.azure_container_registry }} --username ${{ parameters.acr_username }} --password ${{ parameters.acr_password }}
+    helm pull oci://${{ parameters.azure_container_registry }}/helm/${{ parameters.chart_name }} --version ${{ parameters.chart_version }} -d $(Build.ArtifactStagingDirectory)  
+  displayName: Helm pull 
+- task: HelmDeploy@0
+  displayName: Helm install
+  inputs:
+    kubernetesServiceEndpoint: ${{ parameters.kubernetes_service_endpoint }}
+    azureResourceGroup: ${{ parameters.azure_resource_group }}
+    kubernetesCluster: ${{ parameters.kubernetes_cluster }}
+    command: upgrade
+    releaseName: ${{ parameters.release_name }}
+    arguments: --install --namespace ${{ parameters.namespace }}
+    chartType: FilePath
+    chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
+    connectionType: kubernetesServiceEndpoint

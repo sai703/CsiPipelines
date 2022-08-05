@@ -1,0 +1,57 @@
+parameters:
+  - name: build_configuration
+    default: Release
+    type: string
+  - name: reports_folder
+    type: string
+  - name: fail_if_coverage_empty
+    type: boolean
+    default: true 
+
+steps:
+  - powershell: |
+      if(Test-Path $(Common.TestResultsDirectory)){
+        Remove-Item $(Common.TestResultsDirectory)/*.* -recurse
+      }
+    displayName: Clean Test Results if exists
+  - task:  NuGetAuthenticate@1
+
+  - task: DotNetCoreCLI@2
+    displayName: restore
+    inputs:
+      command: "restore"
+      projects: "**/*.sln"
+      configuration: ${{ parameters.build_configuration }}
+
+  - task: DotNetCoreCLI@2
+    displayName: run tests
+    inputs:
+      command: "test"
+      publishTestResults: false
+      projects: "**/*.sln"
+      arguments: '-c ${{ parameters.build_configuration }} --collect:"XPlat Code Coverage" -r ${{ parameters.reports_folder }}' 
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: "Cobertura"
+      summaryFileLocation: "${{ parameters.reports_folder }}/**/coverage.cobertura.xml"
+      failIfCoverageEmpty: ${{ parameters.fail_if_coverage_empty }}
+
+  - task: BuildQualityChecks@8
+    displayName: Check Line Coverage
+    inputs:
+      checkCoverage: true
+      coverageFailOption: "fixed"
+      coverageType: "lines"
+      coverageThreshold: "100"
+      runTitle: "lines"
+
+  - task: BuildQualityChecks@8
+    displayName: Check Branch Coverage
+    inputs:
+      checkCoverage: false
+      coverageFailOption: "fixed"
+      coverageType: "branches"
+      coverageThreshold: "100"
+      runTitle: "branches"
+      

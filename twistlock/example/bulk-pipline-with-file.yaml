@@ -1,0 +1,29 @@
+---
+name: $(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  paths:
+    include:
+      - twistlock
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- group: twistlock 
+
+resources:
+  repositories:
+    - repository: application-pipeline-templates
+      type: git
+      name: EBG DevOps/application-pipeline-templates
+
+jobs:
+- job:
+  steps:
+  - template: /twistlock/bulk-scan.yaml@application-pipeline-templates
+    parameters:
+      acr_endpoint: ACRDigitalBankingEBGSandboxEastUS2
+      twistlock_id: $(twistlock_id)  
+      twistlock_password: $(twistlock_password)
+      ignore_failed_scan: true
+      image_list_file: $(Build.SourcesDirectory)/twistlock/example/images.txt

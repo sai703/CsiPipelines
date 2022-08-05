@@ -1,0 +1,43 @@
+---
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+variables:
+- group: csi-helm-variables
+- name: azure_container_registry
+  value: acrdigitalbankingebgsandboxeastus2.azurecr.io
+
+trigger: 
+- main 
+
+pool:
+  vmImage: ubuntu-latest
+
+resources:
+  repositories:
+  - repository: application-pipeline-templates
+    type: git
+    name: EBG DevOps/application-pipeline-templates 
+
+jobs:
+- template: /helm/helm-build.yaml@application-pipeline-templates
+  parameters:
+    azure_subscription_endpoint: helm-pipeline
+    azure_resource_group: RGDigitalBankingEBGSandboxEastUS2    
+    chart_path: '$(System.DefaultWorkingDirectory)/helm/example'
+    chart_name_for_acr: sampleapp:v2  
+    chart_path_for_acr: '$(System.DefaultWorkingDirectory)/helm/example'
+    azure_container_registry: $(azure_container_registry) 
+- template: /helm/helm-deploy.yaml@application-pipeline-templates
+  parameters:
+    kubernetes_service_endpoint: test-k8s 
+    azure_resource_group: RGDigitalBankingEBGSandboxEastUS2
+    kubernetes_cluster: AKSCommonSndboxEastUS2
+    chart_name: sampleapp
+    chart_version: v2
+    release_name: sample-app-release
+    azure_container_registry: $(azure_container_registry)
+    acr_username: $(ARM_CLIENT_ID)
+    acr_password: $(ARM_CLIENT_SECRET)
+    acr_tenant: $(ARM_TENANT_ID)
+    
+

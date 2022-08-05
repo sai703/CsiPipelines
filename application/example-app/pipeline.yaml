@@ -1,0 +1,64 @@
+---
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+variables:
+- group: twistlock
+- group: csi-helm-variables 
+- name: image_name
+  value: example_app 
+- name: acr_service_endpoint
+  value: ACRDigitalBankingEBGSandboxEastUS2
+- name: azure_container_registry
+  value: acrdigitalbankingebgsandboxeastus2.azurecr.io
+- name: HELM_EXPERIMENTAL_OCI
+  value: 1
+
+trigger:
+  paths:
+    include:
+      - /application/example-app
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+  - repository: application-pipeline-templates
+    type: git
+    name: EBG DevOps/application-pipeline-templates   
+
+jobs:
+- job:
+  steps:
+  - template: /docker/docker-build.yaml@application-pipeline-templates
+    parameters:  
+      build_context: $(Build.SourcesDirectory)/application/example-app
+      container_registry: $(acr_service_endpoint)
+      acr_url: $(azure_container_registry)
+      docker_repository: exampleapp
+      dockerfile_path: $(Build.SourcesDirectory)/application/example-app/Dockerfile 
+      tag: latest
+      risk_profile: internal.headless-services.nonpci
+      twistlock_id: $(twistlock_id)
+      twistlock_password: $(twistlock_password)
+  - template: /helm/helm-build.yaml@application-pipeline-templates
+    parameters:
+      azure_subscription_endpoint: helm-pipeline
+      azure_resource_group: RGDigitalBankingEBGSandboxEastUS2    
+      chart_path: '$(System.DefaultWorkingDirectory)/application/example-app/Chart'
+      chart_name: example-app 
+      chart_version: 1.0.0
+      azure_container_registry: $(azure_container_registry) 
+  - template: /helm/helm-deploy.yaml@application-pipeline-templates
+    parameters:
+      kubernetes_service_endpoint: test-k8s 
+      azure_resource_group: RGDigitalBankingEBGSandboxEastUS2
+      kubernetes_cluster: AKSCommonSndboxEastUS2
+      chart_name: example-app
+      chart_version: 1.0.0
+      release_name: exampleapp
+      azure_container_registry: $(azure_container_registry)
+      acr_username: $(ARM_CLIENT_ID)
+      acr_password: $(ARM_CLIENT_SECRET)
+      acr_tenant: $(ARM_TENANT_ID)
+

@@ -1,0 +1,29 @@
+---
+parameters:
+  - name: image_with_tag
+    type: string
+  - name: twistlock_id
+    type: string
+  - name: twistlock_password
+    type: string
+  - name: twistlock_project
+    type: string
+  - name: ignore_failed_scan
+    type: boolean
+    default: false
+
+steps:
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: ${{ parameters.twistlock_project }}
+      pipeline: TwistcliScanTask
+      buildVersionToDownload: 'latest'
+      downloadType: 'specific'
+      itemPattern: 'drop/TwistcliScanTask'
+      downloadPath: '$(System.ArtifactsDirectory)'
+  - bash: chmod +x $(System.ArtifactsDirectory)/drop/TwistcliScanTask
+    displayName: chmod twistlock
+  - bash: $(System.ArtifactsDirectory)/drop/TwistcliScanTask ${{ parameters.twistlock_id }} ${{ parameters.twistlock_password }} ${{ parameters.image_with_tag }}
+    continueOnError: ${{ parameters.ignore_failed_scan }}
+    displayName: twistlock scan

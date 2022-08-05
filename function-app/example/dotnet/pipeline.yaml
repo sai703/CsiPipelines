@@ -1,0 +1,56 @@
+---
+name: $(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  paths:
+    include:
+      - /function-app/example/dotnet
+
+pool:
+  vmImage: ubuntu-latest
+
+resources:
+  repositories:
+  - repository: application-pipeline-templates
+    type: git
+    name: EBG DevOps/application-pipeline-templates
+    ref: 255347-function-app-pipeline-template
+
+stages:
+  - stage: Test
+    displayName: Run All Tests
+    jobs:
+    - job: Test
+      displayName: Run Tests
+      steps:
+      - template: /application/dotnet/test.yaml@application-pipeline-templates
+        parameters:
+          build_configuration: Release
+          reports_folder: $(Common.TestResultsDirectory)
+
+  - stage: Build
+    displayName: Build and Publish
+    dependsOn: Test
+    jobs:
+    - job:
+      displayName: Publish Artifacts
+      steps:
+      - template: /function-app/build-publish.yaml@application-pipeline-templates
+        parameters:
+          artifact_name: construct
+          project_file: $(Build.SourcesDirectory)/function-app/example/dotnet/src/dotnet-function-example.csproj
+            
+        
+  - stage: Deploy
+    displayName: Deploy Function App
+    dependsOn: Build
+    jobs:
+    - job:
+      displayName: Deploy
+      steps:
+      - template: /function-app/deploy.yaml@application-pipeline-templates
+        parameters:
+          function_app_name: windows-httpfunction-app
+          azure_subscription: CSITransformationSandbox(77233efb-37e6-4159-b817-fbbbd968dbe6) #name of the service connection - resource manager 
+          artifact_name: construct
+          environment: sandbox
+          notify_users: "CSI\\EBG DevOps Team"

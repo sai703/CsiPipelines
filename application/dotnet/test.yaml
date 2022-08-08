@@ -11,10 +11,10 @@ parameters:
     type: string
     default: ""
   - name: line_coverage_threshold
-    type: integer 
+    type: number 
     default: 80
   - name: branch_coverage_threshold
-    type: integer
+    type: number
     default: 80
 
 steps:

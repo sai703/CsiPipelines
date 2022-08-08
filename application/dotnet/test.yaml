@@ -7,6 +7,15 @@ parameters:
   - name: fail_if_coverage_empty
     type: boolean
     default: true 
+  - name: test_flags
+    type: string
+    default: ""
+  - name: line_coverage_threshold
+    type: integer 
+    default: 80
+  - name: branch_coverage_threshold
+    type: integer
+    default: 80
 
 steps:
   - powershell: |
@@ -29,7 +38,7 @@ steps:
       command: "test"
       publishTestResults: false
       projects: "**/*.sln"
-      arguments: '-c ${{ parameters.build_configuration }} --collect:"XPlat Code Coverage" -r ${{ parameters.reports_folder }}' 
+      arguments: '-c ${{ parameters.build_configuration }} --collect:"XPlat Code Coverage" -r ${{ parameters.reports_folder }} ${{ parameters.test_flags }}' 
 
   - task: PublishCodeCoverageResults@1
     inputs:
@@ -43,7 +52,7 @@ steps:
       checkCoverage: true
       coverageFailOption: "fixed"
       coverageType: "lines"
-      coverageThreshold: "100"
+      coverageThreshold: ${{ parameters.line_coverage_threshold }}
       runTitle: "lines"
 
   - task: BuildQualityChecks@8
@@ -52,6 +61,6 @@ steps:
       checkCoverage: false
       coverageFailOption: "fixed"
       coverageType: "branches"
-      coverageThreshold: "100"
+      coverageThreshold: ${{ parameters.branch_coverage_threshold }}
       runTitle: "branches"
       

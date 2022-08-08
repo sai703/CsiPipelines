@@ -7,13 +7,16 @@ parameters:
 - name: build_configuration
   type: string
   default: Release
+- name: publish_flags
+  type: string
+  default: ""
 - name: output_dir
   type: string
   default: $(Build.ArtifactStagingDirectory)
 
 steps:
   - powershell: |
-      dotnet publish ${{ parameters.project_file }} -o ${{ parameters.output_dir }} -c ${{ parameters.build_configuration }}
+      dotnet publish ${{ parameters.project_file }} -o ${{ parameters.output_dir }} -c ${{ parameters.build_configuration }} ${{ parameters.publish_flags }}
   - task: PublishPipelineArtifact@1
     inputs:
       targetPath: ${{ parameters.output_dir }}

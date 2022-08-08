@@ -24,7 +24,7 @@ steps:
       allowPartiallySucceededBuilds: false
       retryDownloadCount: 2
   - task: ArchiveFiles@2
-    displayName: Zip fils
+    displayName: Zip files
     inputs:
       archiveType: zip
       archiveFile: $(Build.ArtifactStagingDirectory)/function.zip

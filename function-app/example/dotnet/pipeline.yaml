@@ -13,7 +13,6 @@ resources:
   - repository: application-pipeline-templates
     type: git
     name: EBG DevOps/application-pipeline-templates
-    ref: 255347-function-app-pipeline-template
 
 stages:
   - stage: Test

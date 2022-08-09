@@ -23,6 +23,9 @@ parameters:
   type: string
 - name: twistlock_password
   type: string
+- name: build_flags
+  type: string
+  default: ""
 
 steps:
 - task: Docker@2
@@ -33,7 +36,7 @@ steps:
     repository: ${{ parameters.docker_repository }}
     buildContext: ${{ parameters.build_context }}
     dockerfile: ${{ parameters.dockerfile_path }}
-    arguments: --build-arg BuildId=$(Build.BuildId) --label "risk.profile=${{ parameters.risk_profile }}"
+    arguments: --build-arg BuildId=$(Build.BuildId) --label "risk.profile=${{ parameters.risk_profile }} ${{ parameters.build_flags }}"
     tags: ${{ parameters.tag }}
 - template: ../twistlock/scan.yaml
   parameters:

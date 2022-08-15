@@ -52,4 +52,3 @@ stages:
           azure_subscription: CSITransformationSandbox(77233efb-37e6-4159-b817-fbbbd968dbe6) #name of the service connection - resource manager 
           artifact_name: construct
           environment: sandbox
-          notify_users: "CSI\\EBG DevOps Team"

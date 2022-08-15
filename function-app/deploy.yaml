@@ -7,8 +7,6 @@ parameters:
     type: string
   - name: environment
     type: string
-  - name: notify_users
-    type: string
   - name: manual_validation
     type: boolean
     default: false

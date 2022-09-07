@@ -31,6 +31,12 @@ steps:
     helm pull oci://${{ parameters.azure_container_registry }}/helm/${{ parameters.chart_name }} --version ${{ parameters.chart_version }} -d $(Build.ArtifactStagingDirectory)  
   displayName: Helm pull 
 - task: HelmDeploy@0
+  inputs:
+    connectionType: 'Azure Resource Manager'
+    azureResourceGroup:  ${{ parameters.azure_resource_group }}
+    kubernetesCluster: ${{ parameters.kubernetes_cluster }}
+    command: 'rollback'
+- task: HelmDeploy@0
   displayName: Helm install
   inputs:
     kubernetesServiceEndpoint: ${{ parameters.kubernetes_service_endpoint }}
@@ -39,18 +45,6 @@ steps:
     command: upgrade
     releaseName: ${{ parameters.release_name }}
     arguments: --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }}   
-    chartType: FilePath
-    chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
-    connectionType: kubernetesServiceEndpoint
-- task: HelmDeploy@0
-  displayName: Helm rollback
-  inputs:
-    kubernetesServiceEndpoint: ${{ parameters.kubernetes_service_endpoint }}
-    azureResourceGroup: ${{ parameters.azure_resource_group }}
-    kubernetesCluster: ${{ parameters.kubernetes_cluster }}
-    command: rollback
-    releaseName: ${{ parameters.release_name }}
-    arguments: --namespace ${{ parameters.namespace }}   
     chartType: FilePath
     chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint

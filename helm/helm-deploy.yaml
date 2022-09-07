@@ -42,3 +42,15 @@ steps:
     chartType: FilePath
     chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint
+- task: HelmDeploy@0
+  displayName: Helm rollback
+  inputs:
+    kubernetesServiceEndpoint: ${{ parameters.kubernetes_service_endpoint }}
+    azureResourceGroup: ${{ parameters.azure_resource_group }}
+    kubernetesCluster: ${{ parameters.kubernetes_cluster }}
+    command: rollback
+    releaseName: ${{ parameters.release_name }}
+    arguments: --namespace ${{ parameters.namespace }}   
+    chartType: FilePath
+    chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
+    connectionType: kubernetesServiceEndpoint

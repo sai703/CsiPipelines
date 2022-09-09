@@ -24,6 +24,8 @@ parameters:
   default: default
 - name: container_image
   type: string
+- name: chart_path
+  type: string
 
 steps:
 - bash: |
@@ -40,5 +42,6 @@ steps:
     releaseName: ${{ parameters.release_name }}
     arguments: --install --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }}  --timeout 15m
     chartType: FilePath
-    chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
+    chartPath: ${{ parameters.chart_path }}
+    #chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint

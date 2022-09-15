@@ -5,8 +5,8 @@ parameters:
   type: string
 - name: acr_url
   type: string
-# - name: docker_repository
-#   type: string
+- name: docker_repository
+  type: string
 # docker
 - name: build_context
   type: string

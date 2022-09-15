@@ -5,8 +5,8 @@ parameters:
   type: string
 - name: acr_url
   type: string
-- name: docker_repository
-  type: string
+# - name: docker_repository
+#   type: string
 # docker
 - name: build_context
   type: string
@@ -33,14 +33,14 @@ steps:
   inputs:
     command: build
     containerRegistry: ${{ parameters.container_registry }}
-    repository: ${{ parameters.docker_repository }}
+    #repository: ${{ parameters.docker_repository }}
     buildContext: ${{ parameters.build_context }}
     dockerfile: ${{ parameters.dockerfile_path }}
     arguments: --build-arg BuildId=$(Build.BuildId) --label "risk.profile=${{ parameters.risk_profile }} ${{ parameters.build_flags }}"
     tags: ${{ parameters.tag }}
 - template: ../twistlock/scan.yaml
   parameters:
-    image_with_tag: ${{ parameters.acr_url }}/${{ parameters.docker_repository }}:${{ parameters.tag }}
+    image_with_tag: ${{ parameters.acr_url }}/${{ parameters.container_registry }}:${{ parameters.tag }}
     twistlock_project: $(System.TeamProject)
     twistlock_id: ${{ parameters.twistlock_id }}
     twistlock_password: '${{ parameters.twistlock_password }}'
@@ -49,6 +49,6 @@ steps:
   displayName: 'Docker Push'
   inputs:
     containerRegistry: ${{ parameters.container_registry }}
-    repository: ${{ parameters.docker_repository }}
+    #repository: ${{ parameters.docker_repository }}
     command: 'push'
     tags: ${{ parameters.tag }}

@@ -40,7 +40,7 @@ steps:
     tags: ${{ parameters.tag }}
 - template: ../twistlock/scan.yaml
   parameters:
-    image_with_tag: ${{ parameters.acr_url }}/${{ parameters.docker_repository }} :${{ parameters.tag }}
+    image_with_tag: ${{ parameters.acr_url }}/${{ parameters.docker_repository }}:${{ parameters.tag }}
     twistlock_project: $(System.TeamProject)
     twistlock_id: ${{ parameters.twistlock_id }}
     twistlock_password: '${{ parameters.twistlock_password }}'

@@ -57,7 +57,7 @@ What follows is a brief desciption of the parameters being passed into the templ
     - Refers to the `Chart.yaml` file located in the 'example' directory.
 
 - name: `azureSubscriptionEndpointForACR`
-    - Refers to the `service connection` set up for the app.
+    - Refers to the `service connection` set up for the app specifically using a service principle authentication.
 - name: `azureResourceGroupForACR`
     - Refers to the resource group hosting the Kubernetes Cluster to be used.
 

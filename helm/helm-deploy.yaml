@@ -38,7 +38,7 @@ steps:
     kubernetesCluster: ${{ parameters.kubernetes_cluster }}
     command: upgrade
     releaseName: ${{ parameters.release_name }}
-    arguments: --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }} 
+    arguments: --install --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }}   
     chartType: FilePath
     chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint

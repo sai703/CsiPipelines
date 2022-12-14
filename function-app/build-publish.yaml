@@ -7,7 +7,7 @@ parameters:
 - name: build_configuration
   type: string
   default: Release
-- name: publish_flags
+- name: publish_flags 
   type: string
   default: ""
 - name: output_dir

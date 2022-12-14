@@ -4,12 +4,19 @@ parameters:
     type: string
   - name: reports_folder
     type: string
+    default: $(Artifacts.Directory)
+  - name: working_directory 
+    type: string 
+    default: $(Build.SourcesDirectory)
   - name: fail_if_coverage_empty
     type: boolean
     default: true 
   - name: test_flags
     type: string
     default: ""
+  - name: project_file
+    type: string
+    default: "**/*.csproj"
   - name: line_coverage_threshold
     type: number 
     default: 80
@@ -28,22 +35,32 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: restore
     inputs:
-      command: "restore"
-      projects: "**/*.sln"
+      command: "restore"  
+      arguments: "--force"
+      projects: ${{ parameters.project_file }}                 #"**/*.sln"
       configuration: ${{ parameters.build_configuration }}
+      workingDirectory: ${{ parameters.working_directory }}
 
   - task: DotNetCoreCLI@2
     displayName: run tests
     inputs:
       command: "test"
       publishTestResults: false
-      projects: "**/*.sln"
+      projects: ${{ parameters.project_file }}                  #"**/*.sln"
       arguments: '-c ${{ parameters.build_configuration }} --collect:"XPlat Code Coverage" -r ${{ parameters.reports_folder }} ${{ parameters.test_flags }}' 
+
+  - task: reportgenerator@4
+    displayName: merge code coverage
+    inputs: 
+      reports: "${{ parameters.reports_folder }}/**/coverage.cobertura.xml"
+      targetdir: ${{ parameters.reports_folder }} 
+      reporttypes: Cobertura
+      verbosity: Verbose
 
   - task: PublishCodeCoverageResults@1
     inputs:
       codeCoverageTool: "Cobertura"
-      summaryFileLocation: "${{ parameters.reports_folder }}/**/coverage.cobertura.xml"
+      summaryFileLocation: "${{ parameters.reports_folder }}/Cobertura.xml"                                   
       failIfCoverageEmpty: ${{ parameters.fail_if_coverage_empty }}
 
   - task: BuildQualityChecks@8

@@ -27,7 +27,6 @@ parameters:
 
 steps:
 - bash: |
-    export HELM_EXPERIMENTAL_OCI=1
     helm registry login ${{ parameters.azure_container_registry }} --username ${{ parameters.acr_username }} --password ${{ parameters.acr_password }}
     helm pull oci://${{ parameters.azure_container_registry }}/helm/${{ parameters.chart_name }} --version ${{ parameters.chart_version }} -d $(Build.ArtifactStagingDirectory)  
   displayName: Helm pull 

@@ -15,8 +15,6 @@ parameters:
   type: string
 - name: chart_version
   type: string
-- name: chart_path
-  type: string
 - name: acr_tenant
   type: string
 - name: release_name
@@ -42,8 +40,7 @@ steps:
     releaseName: ${{ parameters.release_name }}
     arguments: --install --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }}   
     chartType: FilePath
-    # chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
-    chartPath: ${{ parameters.chart_path}}
+    chartPath: ${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint
     install: true
     waitForExecution: false

@@ -28,7 +28,7 @@ parameters:
 steps:
 - bash: |
     helm registry login ${{ parameters.azure_container_registry }} --username ${{ parameters.acr_username }} --password ${{ parameters.acr_password }}
-    helm pull oci ${{ parameters.azure_container_registry }}/helm/${{ parameters.chart_name }} --version ${{ parameters.chart_version }} -d $(Build.ArtifactStagingDirectory)  
+    helm pull  //${{ parameters.azure_container_registry }}/helm/${{ parameters.chart_name }} --version ${{ parameters.chart_version }} -d $(Build.ArtifactStagingDirectory)  
   displayName: Helm pull 
 - task: HelmDeploy@0
   displayName: Helm install

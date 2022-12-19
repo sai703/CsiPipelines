@@ -40,7 +40,7 @@ steps:
     releaseName: ${{ parameters.release_name }}
     arguments: --install --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }}   
     chartType: FilePath
-    chartPath: ${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
+    chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint
     install: true
     waitForExecution: false

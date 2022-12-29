@@ -23,6 +23,24 @@ parameters:
   - name: branch_coverage_threshold
     type: number
     default: 80
+  - name: vsts_feed
+    type: string
+    default: "" 
+  - name: az_cli_login
+    type: boolean
+    default: false
+  - name: client_id
+    type: string
+    default: ""
+  - name: client_secret
+    type: string
+    default: ""
+  - name: tenant_id
+    type: string
+    default: ""
+  - name: azure_subscription
+    type: string
+    default: ""
 
 steps:
   - powershell: |
@@ -30,6 +48,17 @@ steps:
         Remove-Item $(Common.TestResultsDirectory)/*.* -recurse
       }
     displayName: Clean Test Results if exists
+  
+  - task: AzureCLI@2
+    displayName: Azure CLI Login
+    condition: ${{ parameters.az_cli_login }}
+    inputs:
+      azureSubscription: ${{ parameters.azure_subscription }}
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript: |
+        az login --service-principal --username ${{ parameters.client_id }} --password ${{ parameters.client_secret }} --tenant ${{ parameters.tenant_id }}  
+
   - task:  NuGetAuthenticate@1
 
   - task: DotNetCoreCLI@2
@@ -38,6 +67,9 @@ steps:
       command: "restore"  
       arguments: "--force"
       projects: ${{ parameters.project_file }}                 #"**/*.sln"
+      feedsToUse: 'select'
+      vstsFeed: ${{ parameters.vsts_feed }}
+      includeNuGetOrg: true
       configuration: ${{ parameters.build_configuration }}
       workingDirectory: ${{ parameters.working_directory }}
 

@@ -17,10 +17,12 @@ parameters:
     - stdigitalebg$(env1)cus
   - name: qaacc
     type: string
-    value: stdigitalebg$(env2)cus
+    values: 
+    - stdigitalebg$(env2)cus
   - name: stgacc
     type: string
-    value: stdigitalebg$(env3)cus
+    values: 
+    - stdigitalebg$(env3)cus
 
 steps:
       - checkout: self

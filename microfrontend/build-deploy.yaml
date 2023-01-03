@@ -13,7 +13,8 @@ parameters:
     type: string
   - name: devacc
     type: string
-    value: stdigitalebg$(env1)cus
+    values:
+    - stdigitalebg$(env1)cus
   - name: qaacc
     type: string
     value: stdigitalebg$(env2)cus

@@ -11,6 +11,15 @@ parameters:
     type: string
   - name: version_number
     type: string
+  - name: devacc
+    type: string
+    value: stdigitalebg$(env1)cus
+  - name: qaacc
+    type: string
+    value: stdigitalebg$(env2)cus
+  - name: stgacc
+    type: string
+    value: stdigitalebg$(env3)cus
 
 steps:
       - checkout: self
@@ -111,7 +120,7 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env1)cus" -s  "$(mfe)"
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "${{ parameters.devacc }}" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "${{ parameters.qaacc }}" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "${{ parameters.stgacc }}" -s  "$(mfe)"
           

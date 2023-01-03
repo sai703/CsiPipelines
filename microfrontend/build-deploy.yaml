@@ -14,7 +14,7 @@ parameters:
   - name: devacc
     type: string
     values:
-    - stdigitalebg$(env1)cus
+    default: stdigitalebg$(env1)cus
   - name: qaacc
     type: string
     values: 

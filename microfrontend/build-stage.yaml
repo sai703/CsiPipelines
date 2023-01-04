@@ -112,5 +112,5 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"
           

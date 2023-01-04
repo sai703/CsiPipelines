@@ -11,7 +11,11 @@ parameters:
     type: string
   - name: version_number
     type: string
-  
+  - name : env
+    values:
+      - dev
+      - qa
+      - stg
 
 steps:
       - checkout: self

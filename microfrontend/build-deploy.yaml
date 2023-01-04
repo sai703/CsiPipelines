@@ -12,7 +12,7 @@ parameters:
   - name: version_number
     type: string
 
-environment: $(env)
+
 steps:
       - checkout: self
         path: s/${{ parameters.artifact_name }}

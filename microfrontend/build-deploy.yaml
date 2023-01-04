@@ -13,6 +13,14 @@ parameters:
     type: string
 
 
+
+parameters:
+  - name : env
+    values:
+      - dev
+      - qa
+      - stg
+
 steps:
       - checkout: self
         path: s/${{ parameters.artifact_name }}

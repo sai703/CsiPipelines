@@ -11,10 +11,6 @@ parameters:
     type: string
   - name: version_number
     type: string
-
-
-
-parameters:
   - name : env
     values:
       - dev

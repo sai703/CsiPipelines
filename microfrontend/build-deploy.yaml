@@ -107,7 +107,7 @@ steps:
 
       - task: AzureCLI@2
         displayName: copying buildartifacts to $(env1) storage account 
-        condition: and(ne(variables['stg'], 'true',ne(variables['qa'], 'true', eq(variables['dev'], 'true'))
+        condition: and(ne(variables['stg'], 'true',ne(variables['qa'], 'true', eq(variables['dev'], 'true'))))
         inputs:
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'
@@ -117,7 +117,7 @@ steps:
 
       - task: AzureCLI@2
         displayName: copying buildartifacts to $(env2) storage account 
-        condition: and(ne(variables['stg'], 'true',ne(variables['dev'], 'true', eq(variables['qa'], 'true'))
+        condition: and(ne(variables['stg'], 'true',ne(variables['dev'], 'true', eq(variables['qa'], 'true'))))
         inputs:
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'
@@ -127,7 +127,7 @@ steps:
 
       - task: AzureCLI@2
         displayName: copying buildartifacts to $(env3) storage account 
-        condition: and(ne(variables['dev'], 'true',ne(variables['qa'], 'true', eq(variables['stg'], 'true'))
+        condition: and(ne(variables['dev'], 'true',ne(variables['qa'], 'true', eq(variables['stg'], 'true'))))
         inputs:
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'

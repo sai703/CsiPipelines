@@ -107,7 +107,7 @@ steps:
 
       - task: AzureCLI@2
         displayName: copying buildartifacts to $(env1) storage account 
-        condition: eq(variables['env1'], 'true')
+        condition: and(succeeded(), eq(variables['env1'], 'true'))
         inputs:
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'

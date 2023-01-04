@@ -112,7 +112,10 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env1)cus" -s  "$(mfe)"
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"
+          - ${{ if or( and(ne($(env), 'stg'), ne($(env), 'qa')), eq($(env), 'dev') ) }}:
+             - script: az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env1)cus" -s  "$(mfe)"
+          - ${{ if or( and(ne($(env), 'stg'), ne($(env), 'dev')), eq($(env), 'qa') ) }}:
+             - script: az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
+          - ${{ if or( and(ne($(env), 'dev'), ne($(env), 'qa')), eq($(env), 'stg') ) }}:
+             - script: az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"
           

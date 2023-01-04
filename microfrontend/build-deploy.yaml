@@ -106,16 +106,31 @@ steps:
           script: 'mkdir -p $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/'
 
       - task: AzureCLI@2
-        displayName: copying buildartifacts to storage account 
+        displayName: copying buildartifacts to $(env1) storage account 
+        condition: and(ne(variables['stg'], 'true',ne(variables['qa'], 'true', eq(variables['dev'], 'true'))
         inputs:
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-          - ${{ if or( and(ne($(env), 'stg'), ne($(env), 'qa')), eq($(env), 'dev') ) }}:
-             - script: az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env1)cus" -s  "$(mfe)"
-          - ${{ if or( and(ne($(env), 'stg'), ne($(env), 'dev')), eq($(env), 'qa') ) }}:
-             - script: az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
-          - ${{ if or( and(ne($(env), 'dev'), ne($(env), 'qa')), eq($(env), 'stg') ) }}:
-             - script: az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"
-          
+               az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env1)cus" -s  "$(mfe)"
+
+      - task: AzureCLI@2
+        displayName: copying buildartifacts to $(env2) storage account 
+        condition: and(ne(variables['stg'], 'true',ne(variables['dev'], 'true', eq(variables['qa'], 'true'))
+        inputs:
+          azureSubscription: '${{ parameters.azure_subscription }}'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+             az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
+
+      - task: AzureCLI@2
+        displayName: copying buildartifacts to $(env3) storage account 
+        condition: and(ne(variables['dev'], 'true',ne(variables['qa'], 'true', eq(variables['stg'], 'true'))
+        inputs:
+          azureSubscription: '${{ parameters.azure_subscription }}'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+             az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"

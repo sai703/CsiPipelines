@@ -11,6 +11,7 @@ parameters:
     type: string
   - name: version_number
     type: string
+  
 
 steps:
       - checkout: self
@@ -111,7 +112,7 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env1)cus" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "$(storage1)" -s  "$(mfe)"
             az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env2)cus" -s  "$(mfe)"
             az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env3)cus" -s  "$(mfe)"
           

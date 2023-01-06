@@ -32,7 +32,7 @@ steps:
           workingDir: $(Build.SourcesDirectory)
           verbose: false
           customCommand: 'run test'
-        continueOnError: false
+        # continueOnError: false
           
 
       - task: PublishTestResults@2

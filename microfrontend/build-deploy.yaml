@@ -16,6 +16,15 @@ parameters:
 steps:
       - checkout: self
         path: s/${{ parameters.artifact_name }}
+
+      - task: Npm@1
+        inputs:
+          command: publish
+          publishRegistry: useExternalRegistry
+          publishEndpoint: 'npmfeeds'
+          customRegistry: useNpmrc
+          customFeed: 't3'
+          publishEndpoint: 'https://pkgs.dev.azure.com/csiseg/Cloud/_packaging/t3/npm/registry/'
         
       - task: Npm@1
         displayName: 'npm i'

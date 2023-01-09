@@ -23,7 +23,7 @@ steps:
           publishRegistry: useExternalRegistry
           publishEndpoint: 'npmfeeds'
           customRegistry: useNpmrc
-          customFeed: 't3'
+          customFeed: 'Cloud/t3'
           publishEndpoint: 'https://pkgs.dev.azure.com/csiseg/Cloud/_packaging/t3/npm/registry/'
         
       - task: Npm@1

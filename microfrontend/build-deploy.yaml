@@ -18,6 +18,7 @@ steps:
         path: s/${{ parameters.artifact_name }}
 
       - task: Npm@1
+        displayName: 'NPM publish'
         inputs:
           command: publish
           publishRegistry: useExternalRegistry

@@ -31,5 +31,5 @@ steps:
     chartNameForACR: ${{ parameters.chart_name }}:${{ parameters.chart_version }} 
     chartPathForACR: ${{ parameters.chart_path }}
     azureSubscriptionEndpointForACR: ${{ parameters.azure_subscription_endpoint }}
-    azureResourceGroupForACR: ${{ parameters.azure_resource_group }}
+    azureResourceGroupForACR: ${{ parameters.azure_resource_group_forACR }}
     azureContainerRegistry: ${{ parameters.azure_container_registry }}

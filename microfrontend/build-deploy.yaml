@@ -11,23 +11,27 @@ parameters:
     type: string
   - name: version_number
     type: string
+    parameters:
+  - name: environments
+    type: object
+    default: ["Digital_dev", "Digital_QA", "Digital_STG"]
 
 
 steps:
       - checkout: self
         path: s/${{ parameters.artifact_name }}
 
-      - task: Npm@1
-        displayName: 'NPM publish'
-        inputs:
-          name: '$(versionNumber)'
-          command: publish
-          publishRegistry: useExternalRegistry
-          publishEndpoint: 'npmfeeds'
-          customRegistry: useNpmrc
-          customFeed: 'Cloud/t3'
-          access: public
-          #publishEndpoint: 'https://pkgs.dev.azure.com/csiseg/Cloud/_packaging/t3/npm/registry/'
+      # - task: Npm@1
+      #   displayName: 'NPM publish'
+      #   inputs:
+      #     name: '$(versionNumber)'
+      #     command: publish
+      #     publishRegistry: useExternalRegistry
+      #     publishEndpoint: 'npmfeeds'
+      #     customRegistry: useNpmrc
+      #     customFeed: 'Cloud/t3'
+      #     access: public
+      #     #publishEndpoint: 'https://pkgs.dev.azure.com/csiseg/Cloud/_packaging/t3/npm/registry/'
         
       - task: Npm@1
         displayName: 'npm i'
@@ -124,6 +128,6 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg$(env)cus" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ parameters.environments }}cus" -s  "$(mfe)"
 
           

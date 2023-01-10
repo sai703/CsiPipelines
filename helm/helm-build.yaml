@@ -1,7 +1,7 @@
 parameters:
 - name: azure_subscription_endpoint
   type: string
-- name: azure_resource_group
+- name: azure_resource_group_forACR
   type: string
 - name: chart_path
   type: string

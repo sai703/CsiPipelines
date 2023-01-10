@@ -11,9 +11,8 @@ parameters:
     type: string
   - name: version_number
     type: string
-  - name: environments
-    type: object
-    default: ["Digital_dev", "Digital_QA", "Digital_STG"]
+  - name: environment
+    type: string
 
 
 
@@ -128,6 +127,6 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ env }}cus" -s  "$(mfe)"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ environment }}cus" -s  "$(mfe)"
 
           

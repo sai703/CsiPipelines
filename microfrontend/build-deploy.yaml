@@ -11,9 +11,7 @@ parameters:
     type: string
   - name: version_number
     type: string
-  - name: environments
-    type: object
-    default: ["Digital_dev", "Digital_QA", "Digital_STG"]
+
 
 
 steps:

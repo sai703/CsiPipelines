@@ -1,3 +1,17 @@
+parameters:
+  - name : current_sprint 
+    type : string
+  - name : minor
+    type : string
+  - name: artifact_name
+    type: string
+  - name: azure_subscription
+    type: string
+  - name: mfe
+    type: string
+  - name: version_number
+    type: string
+
 
        - task: AzureCLI@2
          displayName: Copying buildartifacts to $(env) storage account 

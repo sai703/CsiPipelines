@@ -121,7 +121,7 @@ steps:
           script: 'mkdir -p $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/'
 
       - task: AzureCLI@2
-        displayName: Copying buildartifacts to $(env) storage account 
+        displayName: Copying buildartifacts to storage account 
         inputs:
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'

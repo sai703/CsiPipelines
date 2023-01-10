@@ -1,5 +1,5 @@
 parameters:
-- name: azure_subscription_endpoint
+- name: acr_subscription_endpoint
   type: string
 - name: azure_resource_group_forACR
   type: string
@@ -30,6 +30,6 @@ steps:
     command: save
     chartNameForACR: ${{ parameters.chart_name }}:${{ parameters.chart_version }} 
     chartPathForACR: ${{ parameters.chart_path }}
-    azureSubscriptionEndpointForACR: ${{ parameters.azure_subscription_endpoint }}
+    azureSubscriptionEndpointForACR: ${{ parameters.acr_subscription_endpoint }}
     azureResourceGroupForACR: ${{ parameters.azure_resource_group_forACR }}
     azureContainerRegistry: ${{ parameters.azure_container_registry }}

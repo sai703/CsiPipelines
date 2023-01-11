@@ -14,10 +14,7 @@ parameters:
   - name: environment
     type: string
 
-
-
 steps:
-
       - task: PowerShell@2
         condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
         inputs:
@@ -25,7 +22,6 @@ steps:
           script: |
             $myDate=$(Get-Date -format yy)
             Write-Host "##vso[build.addbuildtag]${{ parameters.artifact_name }}"
-  
 
       - task: AzureCLI@2
         displayName: Copying buildartifacts to storage account 

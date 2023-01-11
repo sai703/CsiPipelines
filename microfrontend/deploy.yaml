@@ -18,6 +18,9 @@ parameters:
 
 steps:
 
+      - checkout: self
+        path: s/${{ parameters.artifact_name }}
+
       - task: AzureCLI@2
         displayName: Copying buildartifacts to storage account 
         inputs:

@@ -11,8 +11,6 @@ parameters:
     type: string
   - name: version_number
     type: string
-  - name: environment
-    type: string
 
 
 

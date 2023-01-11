@@ -25,10 +25,7 @@ steps:
           script: |
             $myDate=$(Get-Date -format yy)
             Write-Host "##vso[build.addbuildtag]${{ parameters.artifact_name }}"
-            Write-Host "##vso[build.addbuildtag]artifact-published"
-            Write-Host "##vso[build.addbuildtag]$(Build.BuildId)"
-            write-host "##vso[build.addbuildtag]$(versioNnumber).$(Build.BuildNumber)"
-            Write-Host "##vso[task.setvariable variable=MyDate]$myDate"
+  
 
       - task: AzureCLI@2
         displayName: Copying buildartifacts to storage account 

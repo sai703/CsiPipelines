@@ -18,6 +18,15 @@ parameters:
 
 steps:
 
+      - task: Npm@1
+        displayName: 'npm run build'
+        inputs:
+          command: custom
+          workingDir: $(Build.SourcesDirectory)
+          verbose: false
+          customCommand: 'run build'
+
+
       - task: AzureCLI@2
         displayName: Copying buildartifacts to storage account 
         inputs:

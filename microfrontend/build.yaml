@@ -12,24 +12,9 @@ parameters:
   - name: version_number
     type: string
 
-
-
-
 steps:
       - checkout: self
         path: s/${{ parameters.artifact_name }}
-
-      # - task: Npm@1
-      #   displayName: 'NPM publish'
-      #   inputs:
-      #     name: '$(versionNumber)'
-      #     command: publish
-      #     publishRegistry: useExternalRegistry
-      #     publishEndpoint: 'npmfeeds'
-      #     customRegistry: useNpmrc
-      #     customFeed: 'Cloud/t3'
-      #     access: public
-      #     #publishEndpoint: 'https://pkgs.dev.azure.com/csiseg/Cloud/_packaging/t3/npm/registry/'
         
       - task: Npm@1
         displayName: 'npm i'
@@ -47,7 +32,6 @@ steps:
           verbose: false
           customCommand: 'run test'
           
-
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'JUnit'
@@ -88,8 +72,7 @@ steps:
             Write-Host "##vso[build.addbuildtag]$(Build.BuildId)"
             write-host "##vso[build.addbuildtag]$(versioNnumber).$(Build.BuildNumber)"
             Write-Host "##vso[task.setvariable variable=MyDate]$myDate"
-    
-        
+       
       - task: Bash@3
         condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
         inputs:

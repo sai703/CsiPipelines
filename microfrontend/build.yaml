@@ -46,7 +46,6 @@ steps:
           workingDir: $(Build.SourcesDirectory)
           verbose: false
           customCommand: 'run test'
-        # continueOnError: false
           
 
       - task: PublishTestResults@2

@@ -120,14 +120,5 @@ steps:
           targetType: 'inline'
           script: 'mkdir -p $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/'
 
-      - task: AzureCLI@2
-        displayName: Copying buildartifacts to storage account 
-        inputs:
-          # sourceFolder: '$(mfe)'
-          azureSubscription: '${{ parameters.azure_subscription }}'
-          scriptType: 'bash'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ parameters.environment }}cus" -s  "$(mfe)"
 
           

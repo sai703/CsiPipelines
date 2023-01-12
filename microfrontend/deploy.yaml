@@ -41,7 +41,6 @@ steps:
       - task: AzureCLI@2
         displayName: deploy buildartifacts to storage account 
         inputs:
-          # sourceFolder: '$(mfe)'
           azureSubscription: '${{ parameters.azure_subscription }}'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'

@@ -21,7 +21,6 @@ steps:
           targetType: 'inline'
           script: |
             $myDate=$(Get-Date -format yy)
-            Write-Host "##vso[build.addbuildtag]${{ parameters.artifact_name }}"
             Write-Host "##vso[task.setvariable variable=MyDate]$myDate"
       
       # - task: DownloadBuildArtifacts@1

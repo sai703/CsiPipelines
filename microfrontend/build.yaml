@@ -87,12 +87,12 @@ steps:
           ArtifactName: 'db-view-$(mfe)'
           publishLocation: 'Container'
       
-      # - task: DownloadBuildArtifacts@1
-      #   displayName: Download ${{ parameters.artifact_name }} Build Artifact
-      #   inputs:
-      #     buildType: 'current'
-      #     downloadType: 'specific'
-      #     downloadPath: '$(System.ArtifactsDirectory)/dist'
+      - task: DownloadBuildArtifacts@1
+        displayName: Download ${{ parameters.artifact_name }} Build Artifact
+        inputs:
+          buildType: 'current'
+          downloadType: 'specific'
+          downloadPath: '$(System.ArtifactsDirectory)/dist'
         
       # - task: Bash@3 
       #   displayName: Copying buildartifacts to the version folder

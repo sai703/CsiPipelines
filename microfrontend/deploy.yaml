@@ -22,6 +22,13 @@ steps:
           script: |
             $myDate=$(Get-Date -format yy)
             Write-Host "##vso[build.addbuildtag]${{ parameters.artifact_name }}"
+          
+      - task: Bash@3 
+        displayName: Copying buildartifacts to the version folder
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+        inputs:
+          targetType: 'inline'
+          script: 'mkdir -p $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/'
 
       - task: AzureCLI@2
         displayName: Copying buildartifacts to storage account 
@@ -31,6 +38,6 @@ steps:
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ parameters.environment }}cus" -s  "${{parameters.mfe}}"
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ parameters.environment }}cus" -s  "$(mfe)"
 
           

@@ -87,19 +87,19 @@ steps:
           ArtifactName: 'db-view-$(mfe)'
           publishLocation: 'Container'
       
-      # - task: DownloadBuildArtifacts@1
-      #   displayName: Download ${{ parameters.artifact_name }} Build Artifact
-      #   inputs:
-      #     buildType: 'current'
-      #     downloadType: 'specific'
-      #     downloadPath: '$(System.ArtifactsDirectory)/dist'
+      - task: DownloadBuildArtifacts@1
+        displayName: Download ${{ parameters.artifact_name }} Build Artifact
+        inputs:
+          buildType: 'current'
+          downloadType: 'specific'
+          downloadPath: '$(System.ArtifactsDirectory)/dist'
         
-      # - task: Bash@3 
-      #   displayName: Copying buildartifacts to the version folder
-      #   condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-      #   inputs:
-      #     targetType: 'inline'
-      #     script: 'mkdir -p $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/'
+      - task: Bash@3 
+        displayName: Copying buildartifacts to the version folder
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+        inputs:
+          targetType: 'inline'
+          script: 'mkdir -p $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(MyDate).${{ parameters.current_sprint }}.${{parameters.minor}}.$(Build.BuildNumber)/'
           
 
 

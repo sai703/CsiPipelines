@@ -30,7 +30,7 @@ steps:
       #     downloadType: 'specific'
       #     downloadPath: '$(System.ArtifactsDirectory)/dist'
           
-      - task: Bash@3 
+     - task: Bash@3 
         displayName: Copying buildartifacts to the version folder
         condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
         inputs:

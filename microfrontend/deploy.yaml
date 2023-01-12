@@ -23,7 +23,14 @@ steps:
             $myDate=$(Get-Date -format yy)
             Write-Host "##vso[build.addbuildtag]${{ parameters.artifact_name }}"
       
-     - task: Bash@3 
+      # - task: DownloadBuildArtifacts@1
+      #   displayName: Download ${{ parameters.artifact_name }} Build Artifact
+      #   inputs:
+      #     buildType: 'current'
+      #     downloadType: 'specific'
+      #     downloadPath: '$(System.ArtifactsDirectory)/dist'
+          
+      - task: Bash@3 
         displayName: Copying buildartifacts to the version folder
         condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
         inputs:

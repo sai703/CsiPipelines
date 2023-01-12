@@ -70,7 +70,7 @@ steps:
             Write-Host "##vso[build.addbuildtag]${{ parameters.artifact_name }}"
             Write-Host "##vso[build.addbuildtag]artifact-published"
             Write-Host "##vso[build.addbuildtag]$(Build.BuildId)"
-            write-host "##vso[build.addbuildtag]$(versionNumber).$(Build.BuildNumber)"
+            write-host "##vso[build.addbuildtag]$(Build.BuildNumber)"
             Write-Host "##vso[task.setvariable variable=MyDate]$myDate"
        
       - task: Bash@3

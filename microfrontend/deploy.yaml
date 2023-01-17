@@ -1,0 +1,50 @@
+parameters:
+  - name : current_sprint 
+    type : string
+  - name : minor
+    type : string
+  - name: artifact_name
+    type: string
+  - name: azure_subscription
+    type: string
+  - name: mfe
+    type: string
+  - name: version_number
+    type: string
+  - name: environment
+    type: string
+
+steps:
+      - task: PowerShell@2
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+        inputs:
+          targetType: 'inline'
+          script: |
+            $myDate=$(Get-Date -format yy)
+            Write-Host "##vso[task.setvariable variable=MyDate]$myDate"
+            
+      
+      - task: DownloadBuildArtifacts@1
+        displayName: Download ${{ parameters.artifact_name }} Build Artifact
+        inputs:
+          buildType: 'current'
+          downloadType: 'specific'
+          downloadPath: '$(System.ArtifactsDirectory)/dist'
+          
+      - task: Bash@3 
+        displayName: deploy buildartifacts to the version folder
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+        inputs:
+          targetType: 'inline'
+          script: 'mkdir -p $(mfe)/csi-$(mfe)/$(Build.BuildNumber)/ && cp -r $(System.ArtifactsDirectory)/dist/${{ parameters.artifact_name }}/* $(mfe)/csi-$(mfe)/$(Build.BuildNumber)/'
+
+      - task: AzureCLI@2
+        displayName: deploy buildartifacts to storage account 
+        inputs:
+          azureSubscription: '${{ parameters.azure_subscription }}'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az storage blob upload-batch -d "${{ parameters.artifact_name }}"  --account-name "stdigitalebg${{ parameters.environment }}cus" -s  "$(mfe)"
+
+          

@@ -95,7 +95,7 @@ steps:
           AnalysisService: 'Veracode-service connection'
           veracodeAppProfile: '${{ parameters.appname }}'
           version: '${{ parameters.appname }}-build:$(Build.BuildNumber)'
-          filepath: 'dist'
+          filepath: '/home/vsts/work/1/a/dist'
           sandboxName: 'functionapp_imaging_${{ parameters.artifact_name }}'
           createSandBox: true
           createProfile: true

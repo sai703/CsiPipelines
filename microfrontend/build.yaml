@@ -11,6 +11,8 @@ parameters:
     type: string
   - name: version_number
     type: string
+  - name: appname
+    type: string
 
 steps:
       - checkout: self
@@ -86,6 +88,21 @@ steps:
           PathtoPublish: $(Build.ArtifactStagingDirectory)/dist
           ArtifactName: 'db-view-$(mfe)'
           publishLocation: 'Container'
+
+      - task: Veracode@3
+        inputs:
+          ConnectionDetailsSelection: 'Endpoint'
+          AnalysisService: 'Veracode-service connection'
+          veracodeAppProfile: '${{ parameters.appname }}'
+          version: '${{ parameters.appname }}-build:$(Build.BuildNumber)'
+          filepath: '$(Build.ArtifactStagingDirectory)/dist'
+          sandboxName: 'functionapp_imaging_${{ parameters.artifact_name }}'
+          createSandBox: true
+          createProfile: true
+          failBuildIfUploadAndScanBuildStepFails: true
+          importResults: true
+          failBuildOnPolicyFail: true
+          maximumWaitTime: '360' 
       
 
           

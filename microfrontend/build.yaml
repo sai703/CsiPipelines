@@ -55,6 +55,21 @@ steps:
           verbose: false
           customCommand: 'run build'
 
+      - task: Veracode@3
+        inputs:
+          ConnectionDetailsSelection: 'Endpoint'
+          AnalysisService: 'Veracode-service connection'
+          veracodeAppProfile: '${{ parameters.appname }}'
+          version: '${{ parameters.appname }}-build:$(Build.BuildNumber)'
+          filepath: '$(Build.SourcesDirectory)/dist'
+          sandboxName: 'functionapp_imaging_${{ parameters.artifact_name }}'
+          createSandBox: true
+          createProfile: true
+          failBuildIfUploadAndScanBuildStepFails: true
+          importResults: true
+          failBuildOnPolicyFail: true
+          maximumWaitTime: '360' 
+
       - task: PowerShell@2
         displayName: Set the name of the build (i.e. the Build.BuildNumber)
         inputs:
@@ -89,20 +104,20 @@ steps:
           ArtifactName: 'db-view-$(mfe)'
           publishLocation: 'Container'
 
-      - task: Veracode@3
-        inputs:
-          ConnectionDetailsSelection: 'Endpoint'
-          AnalysisService: 'Veracode-service connection'
-          veracodeAppProfile: '${{ parameters.appname }}'
-          version: '${{ parameters.appname }}-build:$(Build.BuildNumber)'
-          filepath: 'dist'
-          sandboxName: 'functionapp_imaging_${{ parameters.artifact_name }}'
-          createSandBox: true
-          createProfile: true
-          failBuildIfUploadAndScanBuildStepFails: true
-          importResults: true
-          failBuildOnPolicyFail: true
-          maximumWaitTime: '360' 
+      # - task: Veracode@3
+      #   inputs:
+      #     ConnectionDetailsSelection: 'Endpoint'
+      #     AnalysisService: 'Veracode-service connection'
+      #     veracodeAppProfile: '${{ parameters.appname }}'
+      #     version: '${{ parameters.appname }}-build:$(Build.BuildNumber)'
+      #     filepath: 'dist'
+      #     sandboxName: 'functionapp_imaging_${{ parameters.artifact_name }}'
+      #     createSandBox: true
+      #     createProfile: true
+      #     failBuildIfUploadAndScanBuildStepFails: true
+      #     importResults: true
+      #     failBuildOnPolicyFail: true
+      #     maximumWaitTime: '360' 
       
 
           

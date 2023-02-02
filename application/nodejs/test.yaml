@@ -48,7 +48,7 @@ steps:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: JUnit
-      testResultsFiles: ${{ parameters.working_dir }}/test_reports/jest-junit.xml
+      testResultsFiles: ${{ parameters.working_dir }}/test_reports/*-junit.xml
       mergeTestResults: true
       testRunTitle: 'Publish test results'
 

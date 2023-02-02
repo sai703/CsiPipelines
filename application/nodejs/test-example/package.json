@@ -1,0 +1,19 @@
+{
+  "name": "test-example",
+  "version": "1.0.0",
+  "description": "for testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage"
+  },
+  "jest-junit": {
+    "outputDirectory": "test_reports",
+    "outputName": "jest-junit.xml"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.4.1",
+    "jest-junit": "^15.0.0"
+  }
+}

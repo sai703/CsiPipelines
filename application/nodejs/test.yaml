@@ -1,0 +1,79 @@
+parameters:
+  - name: working_dir
+    type: string
+    default: $(Build.SourcesDirectory)
+  - name: line_coverage_threshold
+    type: number 
+    default: 80
+  - name: branch_coverage_threshold
+    type: number
+    default: 80
+  - name: vsts_feed
+    type: string
+    default: "" 
+  - name: az_cli_login
+    type: boolean
+    default: false
+  - name: client_id
+    type: string
+    default: ""
+  - name: client_secret
+    type: string
+    default: ""
+  - name: tenant_id
+    type: string
+    default: ""
+  - name: azure_subscription
+    type: string
+    default: ""
+
+steps:
+# npm install
+  - task: Npm@1
+    displayName: npm install
+    inputs:
+      command: install
+      workingDir: ${{ parameters.working_dir }}
+      
+# Unit Test
+  - task: Npm@1
+    displayName: Unit tests
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.working_dir }}
+      verbose: false
+      customCommand: 'run test'
+
+# Code Coverage
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: ${{ parameters.working_dir }}/test_reports/jest-junit.xml
+      mergeTestResults: true
+      testRunTitle: 'Publish test results'
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: ${{ parameters.working_dir }}/coverage/cobertura-coverage.xml
+      reportDirectory: 'coverage'
+      failIfCoverageEmpty: true
+
+# Inspect Code Coverage File
+  - task: BuildQualityChecks@8
+    displayName: Check Line Coverage
+    inputs:
+      checkCoverage: true
+      coverageFailOption: "fixed"
+      coverageType: "lines"
+      coverageThreshold: ${{ parameters.line_coverage_threshold }}
+      runTitle: "lines"
+
+  - task: BuildQualityChecks@8
+    displayName: Check Branch Coverage
+    inputs:
+      checkCoverage: false
+      coverageFailOption: "fixed"
+      coverageType: "branches"
+      coverageThreshold: ${{ parameters.branch_coverage_threshold }}
+      runTitle: "branches"

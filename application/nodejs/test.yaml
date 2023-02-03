@@ -14,18 +14,12 @@ parameters:
   - name: az_cli_login
     type: boolean
     default: false
-  - name: client_id
+  - name: test_result_files
     type: string
-    default: ""
-  - name: client_secret
+    default: /test_reports/*-junit.xml
+  - name: summary_file_location 
     type: string
-    default: ""
-  - name: tenant_id
-    type: string
-    default: ""
-  - name: azure_subscription
-    type: string
-    default: ""
+    default: /coverage/cobertura-coverage.xml
 
 steps:
 # npm install
@@ -48,14 +42,14 @@ steps:
   - task: PublishTestResults@2
     inputs:
       testResultsFormat: JUnit
-      testResultsFiles: ${{ parameters.working_dir }}/test_reports/*-junit.xml
+      testResultsFiles: ${{ parameters.working_dir }}${{ parameters.test_result_files }}
       mergeTestResults: true
       testRunTitle: 'Publish test results'
 
   - task: PublishCodeCoverageResults@1
     inputs:
       codeCoverageTool: Cobertura
-      summaryFileLocation: ${{ parameters.working_dir }}/coverage/cobertura-coverage.xml
+      summaryFileLocation: ${{ parameters.working_dir }}${{ parameters.summary_file_location }}
       reportDirectory: 'coverage'
       failIfCoverageEmpty: true
 

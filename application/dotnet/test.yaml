@@ -56,6 +56,7 @@ steps:
       azureSubscription: ${{ parameters.azure_subscription }}
       scriptType: pscore
       scriptLocation: inlineScript
+      addSpnToEnvironment: true
       inlineScript: |
         az login --service-principal --username ${{ parameters.client_id }} --password ${{ parameters.client_secret }} --tenant ${{ parameters.tenant_id }}  
 

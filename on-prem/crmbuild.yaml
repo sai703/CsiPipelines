@@ -1,0 +1,106 @@
+parameters:
+- name: artifact_name
+  type: string
+
+- name: manual_validation
+  type: boolean
+  default: false
+
+- name: project_file
+  type: string
+  # default: ""
+
+- name: build_configuration
+  type: string
+  default: Release
+
+- name: buildPlatform
+  type: string
+  default: 'Any CPU'
+
+- name: publish_flags 
+  type: string
+  default: ""
+
+- name: output_dir
+  type: string
+  default: $(Build.ArtifactStagingDirectory)
+
+- name: vsts_feed
+  type: string
+
+- name: working_directory
+  type: string
+  default: $(Build.SourcesDirectory)\**\*.sln
+
+- name: filename
+  type: string
+  default: app.zip
+
+- name: enabled
+  type: string
+  default: true
+
+- name: testfilelocation
+  type: string
+
+- name: runTask
+  type: boolean
+
+
+steps:
+- task: NuGetToolInstaller@1
+  displayName: 'Use NuGet 5.x'
+  inputs:
+    versionSpec: 5.x
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'restore'
+    restoreSolution: ${{ parameters.project_file }}
+    feedsToUse: 'select'
+    vstsFeed: ${{ parameters.vsts_feed }}
+
+
+- task: csiweb.scaRuleCopyVsts.scaRuleCopy-buildTask.scaRuleCopyVsts@1
+  displayName: 'SCA Rule Copy'
+  inputs:
+    ruleSet: High
+
+
+- task: VSBuild@1
+  displayName: 'Build solution'
+  inputs:
+    solution: '${{ parameters.working_directory }}'
+    vsVersion: 16.0
+    msbuildArgs: '/p:OutputPath="$(Build.BinariesDirectory)"  /p:RunCodeAnalysis=false /p:CodeAnalysisRuleSet="$(Build.SourcesDirectory)\CSI High.ruleset" /p:UseSharedCompilation=false'
+    platform: '${{ parameters.buildPlatform }}'
+    configuration: '${{ parameters.build_configuration }}'
+
+- task: VSTest@2
+  displayName: 'Run Tests'
+  condition: ${{ parameters.runTask}}
+  inputs:
+    testAssemblyVer2: ${{ parameters.testfilelocation }}
+    searchFolder: '$(Build.SourcesDirectory)'
+    testFiltercriteria: 'TestCategory!=DatabaseIntegration'
+    codeCoverageEnabled: false
+    platform: '$(BuildPlatform)'
+    configuration: '$(BuildConfiguration)'
+
+
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+  inputs:
+    SourceFolder: '$(Build.BinariesDirectory)'
+    Contents: |
+     **
+     !**\*.pdb
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: ${{ parameters.artifact_name }}'
+  inputs:
+    ArtifactName: ${{ parameters.artifact_name }}

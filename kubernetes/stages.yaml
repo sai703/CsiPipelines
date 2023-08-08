@@ -1,0 +1,167 @@
+parameters:
+- name: environment
+  type: object
+- name: azure_subscription
+  type: string
+  default: ""
+- name: vsts_feed
+  type: string
+- name: image_name
+  type: string
+- name: azure_container_registry 
+  type: string 
+- name: acr_service_endpoint 
+  type: string
+- name: azure_resource_group #cluster resource group
+  type: string
+- name: chart_version
+  type: string
+- name: aks_cluster_name
+  type: string 
+- name: release_name
+  type: string
+- name: chart_path
+  type: string  
+- name: docker_artifact_name # API build artifact name  
+  type: string
+- name: docker_projfile_name # csproj file path to build the artifacts
+  type: string
+- name: docker_file_path #dockerfile path
+  type: string
+- name: twistlock_id
+  type: string
+- name: twistlock_password
+  type: string
+- name: service_connection
+  type: string
+- name: acr_username
+  type: string
+- name: acr_password
+  type: string
+- name: acr_tenant
+  type: string
+- name: sub_product_name
+  type: string
+- name: dev_environment_name
+  type: string
+- name: qa_environment_name
+  type: string
+- name: project_file
+  type: string
+- name: docker_app_name
+  type: string
+- name: veracode_service_connection
+  type: string
+- name: sandboxName
+  type: string
+
+stages:
+            
+# Stage A - Build
+  - stage: AKS__Build
+    displayName: Docker Build and Push 
+    jobs: 
+# API build
+    - job: app_build
+      displayName: API Build and Publish Artifacts  
+      steps:
+      - template: /dotnet-common/build.yaml@application-pipeline-templates
+        parameters:
+         veracodeAppName: ${{ parameters.docker_app_name }}
+         vsts_feed: ${{ parameters.vsts_feed }}
+         artifact_name: ${{ parameters.docker_artifact_name }} 
+         project_file: $(Build.SourcesDirectory)/${{ parameters.docker_projfile_name }} 
+         azure_subscription: $(service_connection)
+         build_configuration: Build 
+         working_directory: $(Build.SourcesDirectory)
+         reports_folder: $(Common.TestResultsDirectory) 
+         veracode_service_connection: ${{ parameters.veracode_service_connection }}
+         sandboxName: ${{ parameters.sandboxName }}
+    
+    
+    - job: docker_build
+      displayName: docker build
+      dependsOn: app_build
+      steps:      
+      - template: /docker/docker-build.yaml@application-pipeline-templates
+        parameters:
+          build_context: $(Pipeline.Workspace)/${{ parameters.docker_artifact_name }}
+          container_registry: ${{ parameters.acr_service_endpoint }}
+          acr_url: ${{ parameters.azure_container_registry }}
+          docker_repository: ${{ parameters.image_name }}
+          dockerfile_path: $(Build.SourcesDirectory)/${{ parameters.docker_file_path }}
+          risk_profile: internal.headless-services.nonpci
+          twistlock_id: ${{ parameters.twistlock_id }}
+          twistlock_password: ${{ parameters.twistlock_password }}  
+          
+  - stage: Helm_Build
+    displayName: Helm Build
+    jobs: 
+    - job: Helm_build
+      displayName: Helm Build
+      steps:
+      - template: /helm/helm-build.yaml@application-pipeline-templates
+        parameters:
+           azure_subscription_endpoint: ${{ parameters.service_connection }}
+           azure_resource_group: ${{ parameters.azure_resource_group }}
+           chart_path: $(Build.SourcesDirectory)/${{ parameters.chart_path }}
+           chart_name: ${{ parameters.image_name }}
+           chart_version: ${{ parameters.chart_version }} 
+           azure_container_registry: ${{ parameters.azure_container_registry }}
+  - ${{ each env in parameters.environment }}:
+    - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+        - stage: ${{ env.environment }}
+          displayName: AKS - ${{ env.environment }}
+          jobs:
+            - job: aks_deploy_${{ env.environment }}
+              displayName: Helm Deploy
+              steps:
+                - template: /helm/helm-deploy.yaml@application-pipeline-templates
+                  parameters:
+                    azure_resource_group: ${{ parameters.azure_resource_group }}
+                    kubernetes_cluster: ${{ parameters.aks_cluster_name }}
+                    chart_name: ${{ parameters.image_name }}
+                    chart_version: ${{ parameters.chart_version }}
+                    release_name: ${{ parameters.release_name }}
+                    sub_product_name: ${{ parameters.sub_product_name }}
+                    env: ${{ env.environment }}
+                    container_image: ${{ parameters.azure_container_registry }}/${{
+                      parameters.image_name }}:$(tag) 
+                    azure_container_registry: ${{ parameters.azure_container_registry }}
+                    acr_username: ${{ parameters.acr_username }}
+                    acr_password: ${{ parameters.acr_password }}
+                    acr_tenant: ${{ parameters.acr_tenant }}
+                    client_id: $(${{ env.environment }}_workload_client_id)
+                - ${{ if or(contains(env.environment, dev_environment_name), contains(env.environment, qa_environment_name)) }}:
+                  - template: /kubernetes/readyAPI.yaml@application-pipeline-templates
+                    parameters:
+                      environmentName: ${{ env.environment }}
+                      version: 1.0.0
+    - ${{ if contains(variables['Build.SourceBranch'], 'refs/heads/feature/') }}:
+        - ${{ if contains(env.environment, parameters.dev_environment_name) }}:
+            - stage: ${{ env.environment }}
+              displayName: AKS - ${{ env.environment }}
+              jobs:
+                - job: aks_deploy
+                  displayName: Helm Deploy
+                  steps:
+                    - template: /helm/helm-deploy.yaml@application-pipeline-templates
+                      parameters:
+                        azure_resource_group: ${{ parameters.azure_resource_group }}
+                        kubernetes_cluster: ${{ parameters.aks_cluster_name }}
+                        chart_name: ${{ parameters.image_name }}
+                        chart_version: ${{ parameters.chart_version }}
+                        release_name: ${{ parameters.release_name }}
+                        sub_product_name: ${{ parameters.sub_product_name }}
+                        env: ${{ env.environment }}
+                        container_image: ${{ parameters.azure_container_registry }}/${{
+                          parameters.image_name }}:$(tag) 
+                        azure_container_registry: ${{ parameters.azure_container_registry }}
+                        acr_username: ${{ parameters.acr_username }}
+                        acr_password: ${{ parameters.acr_password }}
+                        acr_tenant: ${{ parameters.acr_tenant }}
+                        client_id: $(${{ env.environment }}_workload_client_id)
+                    - template: /kubernetes/readyAPI.yaml@application-pipeline-templates
+                      parameters:
+                        environmentName: ${{ env.environment }}
+                        version: 1.0.0

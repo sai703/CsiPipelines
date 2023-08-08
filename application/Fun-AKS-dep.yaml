@@ -1,0 +1,228 @@
+parameters:
+## Parameters for Helm and Docker Builds
+- name: image_name
+  type: string
+- name: azure_container_registry 
+  type: string 
+- name: acr_service_endpoint 
+  type: string
+- name: azure_resource_group #cluster resource group
+  type: string
+- name: chart_version
+  type: string
+- name: aks_cluster_name
+  type: string 
+- name: release_name
+  type: string
+- name: chart_path
+  type: string  
+- name: docker_artifact_name # API build artifact name  
+  type: string
+- name: docker_projfile_name # csproj file path to build the artifacts
+  type: string
+- name: docker_file_path #dockerfile path
+  type: string
+- name: twistlock_id
+  type: string
+- name: twistlock_password
+  type: string
+- name: service_connection
+  type: string
+- name: acr_username
+  type: string
+- name: acr_password
+  type: string
+- name: acr_tenant
+  type: string
+- name: sub_product_name
+  type: string
+- name: dev_environment_name
+  type: string
+- name: qa_environment_name
+  type: string
+
+
+- name: docker_app_name # veracode app name
+  type: string
+- name: functionapp_veracode_appname
+  type: string
+
+
+
+## Function app build parameters
+- name: project_file
+  type: object # to pass multiple proj files
+- name: vsts_feed
+  type: string
+  
+##Functionapp deploy parameters
+- name: environments
+  type: object
+
+stages:
+            
+# Stage A - Build
+  - stage: AKS_Functionapp_Build
+    displayName: Docker Build and Push and function app build
+    # dependsOn: Test 
+    jobs: 
+    
+# API build
+    - job: app_build
+      displayName: Publish Artifacts images API
+      steps:
+      - template: /dotnet-common/build.yaml@application-pipeline-templates
+        parameters:
+         appname: ${{ parameters.docker_app_name }}
+         vsts_feed: ${{ parameters.vsts_feed }}
+         artifact_name: ${{ parameters.docker_artifact_name }} 
+         project_file: $(Build.SourcesDirectory)/${{ parameters.docker_projfile_name }} 
+        #  az_cli_login: false
+         azure_subscription: $(service_connection)
+         build_configuration: Build 
+         working_directory: $(Build.SourcesDirectory)
+         reports_folder: $(Common.TestResultsDirectory) 
+
+    - job: docker_build
+      displayName: docker build
+      dependsOn: app_build
+      steps:
+      
+      - template: /docker/docker-build.yaml@application-pipeline-templates
+        parameters:
+          build_context: $(Agent.BuildDirectory)/${{ parameters.docker_artifact_name }}
+          container_registry: ${{ parameters.acr_service_endpoint }}
+          acr_url: ${{ parameters.azure_container_registry }}
+          docker_repository: ${{ parameters.image_name }}
+          dockerfile_path: $(Build.SourcesDirectory)/${{ parameters.docker_file_path }}
+          risk_profile: internal.headless-services.nonpci
+          twistlock_id: ${{ parameters.twistlock_id }}
+          twistlock_password: ${{ parameters.twistlock_password }}  
+
+# Creates Helm Folder and helm build    
+    - job: Helm_build
+      displayName: Helm Build
+      dependsOn: docker_build
+      steps:
+      - template: /helm/helm-build.yaml@application-pipeline-templates
+        parameters:
+           azure_subscription_endpoint: ${{ parameters.service_connection }}
+           azure_resource_group: ${{ parameters.azure_resource_group }}
+           chart_path: $(Build.SourcesDirectory)/${{ parameters.chart_path }}
+           chart_name: ${{ parameters.image_name }}
+           chart_version: ${{ parameters.chart_version }} 
+           azure_container_registry: ${{ parameters.azure_container_registry }}
+          
+
+# Builds and Publishes Functionapp
+    - ${{ each csproj in parameters.project_file }}:
+      - ${{ if ne(csproj.artifact_name, '') }}:
+        - job: Funaction_apps_build_${{ csproj.artifact_name }}
+          displayName: Build and publish
+          steps:
+            - template: /dotnet-common/build.yaml@application-pipeline-templates
+              parameters:
+                veracodeAppName: ${{parameters.functionapp_veracode_appname}}
+                veracode_service_connection: 'veracode_service_connection'
+                vsts_feed: ${{ parameters.vsts_feed }}
+                artifact_name: ${{ csproj.artifact_name }}
+                project_file: $(Build.SourcesDirectory)/${{ csproj.name}}
+                az_cli_login: false
+                azure_subscription: $(service_connection)
+                build_configuration: Build 
+                working_directory: $(Build.SourcesDirectory)
+                reports_folder: $(Common.TestResultsDirectory)
+            
+# AKS and Functionapp deployment
+
+  - ${{ each env in parameters.environments }}:
+    - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      - stage: ${{ env.environment }}
+        displayName: AKS and function app deployment- ${{ env.environment }}
+        jobs: 
+        - job: aks_deploy_${{ env.environment }}
+          displayName: Helm chart deployment
+          steps:             
+      # Deploys Helm 
+            - template: /helm/helm-deploy.yaml@application-pipeline-templates
+              parameters:
+                azure_resource_group: ${{ parameters.azure_resource_group }}
+                kubernetes_cluster: ${{ parameters.aks_cluster_name }}   
+                chart_name: ${{ parameters.image_name }}                  
+                chart_version: ${{ parameters.chart_version }}
+                release_name: ${{ parameters.release_name }}
+                sub_product_name: ${{ parameters.sub_product_name }}
+                env: ${{ env.environment }}
+                container_image: ${{ parameters.azure_container_registry }}/${{ parameters.image_name }}:$(tag)            
+                azure_container_registry: ${{ parameters.azure_container_registry }}
+                acr_username: ${{ parameters.acr_username }}
+                acr_password: ${{ parameters.acr_password }}
+                acr_tenant: ${{ parameters.acr_tenant }}
+                client_id: $(${{ env.environment }}_workload_client_id)
+            
+      # deploys functionapp 
+
+        - ${{ each app in env.apps }}:
+          - ${{ if ne(env.artifact_name, '') }}:
+            - job: Deploy_${{ replace(app.artifact_name, '-', '_') }}_${{ env }}
+              displayName: Deploy ${{ app.name }} to ${{ env }}
+              environment: ${{ env.environment }}
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                      - template: /function-app/deploy.yaml@application-pipeline-templates
+                        parameters:
+                          artifact_name: ${{ app.artifact_name }}
+                          function_app_name: ${{ app.name }}
+                          azure_subscription: ${{ env.azure_subscription }}
+                      - ${{ if or(contains(env.environment, parameters.dev_environment_name), contains(env.environment, parameters.qa_environment_name)) }}:
+                      - template: /function-app/readyApi.yaml@application-pipeline-templates
+                        parameters:
+                          environmentName: ${{ env.environment }}
+                          version: 1.0.0
+
+    - ${{ if contains(variables['Build.SourceBranch'], 'refs/heads/feature/') }}:
+      - ${{ if contains(env.environment, parameters.dev_environment_name) }}:
+        - stage: ${{ env.environment }}
+          displayName: AKS and function app deployment- ${{ env.environment }}
+          jobs: 
+          - job: aks_deploy
+            displayName: Helm chart deployment
+            steps:             
+        # Deploys Helm 
+              - template: /helm/helm-deploy.yaml@application-pipeline-templates
+                parameters:
+                  azure_resource_group: ${{ parameters.azure_resource_group }}
+                  kubernetes_cluster: ${{ parameters.aks_cluster_name }}   
+                  chart_name: ${{ parameters.image_name }}                  
+                  chart_version: ${{ parameters.chart_version }}
+                  release_name: ${{ parameters.release_name }}
+                  sub_product_name: ${{ parameters.sub_product_name }}
+                  env: ${{ env.environment }}
+                  container_image: ${{ parameters.azure_container_registry }}/${{ parameters.image_name }}:$(tag)            
+                  azure_container_registry: ${{ parameters.azure_container_registry }}
+                  acr_username: ${{ parameters.acr_username }}
+                  acr_password: ${{ parameters.acr_password }}
+                  acr_tenant: ${{ parameters.acr_tenant }}
+                  client_id: $(${{ env.environment }}_workload_client_id)
+              
+        # deploys functionapp 
+
+          - ${{ each app in env.apps }}:
+            - deployment: Deploy_${{ replace(app.artifact_name, '-', '_') }}_${{ env.environment }}
+              displayName: Deploy ${{ app.name }} to ${{ env.environment }}
+              environment: ${{ env.environment }}
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                      - template: /function-app/deploy.yaml@application-pipeline-templates
+                        parameters:
+                          artifact_name: ${{ app.artifact_name }}
+                          function_app_name: ${{ app.name }}
+                          azure_subscription: ${{ parameters.azure_subscription }}
+                      - template: /function-app/readyApi.yaml@application-pipeline-templates
+                        parameters:
+                          environmentName: ${{ env.environment }}
+                          version: 1.0.0

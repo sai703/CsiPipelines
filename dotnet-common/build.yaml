@@ -1,0 +1,205 @@
+---
+parameters:
+- name: artifact_name
+  type: string
+
+- name: manual_validation
+  type: boolean
+  default: false
+
+- name: project_file
+  type: string
+
+- name: project_file_test
+  type: string
+  default: "**/*.csproj"
+
+- name: build_configuration
+  type: string
+  default: Release
+
+- name: reports_folder
+  type: string
+  default: $(Artifacts.Directory)
+
+- name: publish_flags 
+  type: string
+  default: "-c release -r win-x64 --self-contained true"
+
+- name: output_dir
+  type: string
+  default: $(Build.ArtifactStagingDirectory)
+
+- name: vsts_feed
+  type: string
+  default: "" 
+
+- name: working_directory
+  type: string
+  default: $(Build.SourcesDirectory)
+
+- name: filename
+  type: string
+  default: function.zip
+
+- name: fail_if_coverage_empty
+  type: boolean
+  default: true 
+
+- name: test_flags
+  type: string
+  default: ""
+
+- name: veracodeAppName
+  type: string
+
+- name: veracode_service_connection
+  type: string
+
+- name: sandboxName
+  type: string
+
+- name: enabled
+  type: string
+  default: true
+
+- name: line_coverage_threshold
+  type: number 
+  default: 80
+
+- name: branch_coverage_threshold
+  type: number
+  default: 80
+
+- name: az_cli_login
+  type: boolean
+  default: false
+  
+- name: azure_subscription
+  type: string
+  default: ""
+
+- name: VeracodeEnabled
+  type: boolean
+  default: false
+
+- name: createsandbox
+  type: boolean
+  default: false
+
+
+# Build Publish
+steps:
+  - task:  NuGetAuthenticate@1
+
+  - task: DotNetCoreCLI@2
+    displayName: restore
+    inputs:
+      command: "restore" 
+      arguments: "--force"
+      projects: ${{ parameters.project_file_test }}
+      feedsToUse: 'select'
+      vstsFeed: ${{ parameters.vsts_feed }}
+      includeNuGetOrg: true
+      configuration: ${{ parameters.build_configuration }}
+      workingDirectory: ${{ parameters.working_directory }}
+    enabled: ${{ parameters.enabled }}
+
+  - task: UseDotNet@2
+    displayName: 'Version Upgrade'
+    inputs:
+      version: '6.x'
+      includePreviewVersions: true
+      
+  - task: DotNetCoreCLI@2
+    displayName: publish
+    inputs:
+      command: "build"
+      projects: ${{ parameters.project_file }}
+      arguments: "-o \"$(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}\" ${{ parameters.publish_flags }}"
+      feedsToUse: 'select'
+      vstsFeed: ${{ parameters.vsts_feed }}
+      includeNuGetOrg: true
+      configuration: ${{ parameters.build_configuration }}
+      workingDirectory: ${{ parameters.working_directory }}
+    enabled: ${{ parameters.enabled }}
+
+  - task: DotNetCoreCLI@2
+    displayName: run tests
+    inputs:
+      command: "test"
+      publishTestResults: false
+      projects: ${{ parameters.project_file_test }}                  #"**/*.sln"
+      arguments: '-c ${{ parameters.build_configuration }} --collect:"XPlat Code Coverage" -r ${{ parameters.reports_folder }} ${{ parameters.test_flags }}' 
+    enabled: ${{ parameters.enabled }}
+
+  - task: reportgenerator@4
+    displayName: merge code coverage
+    inputs: 
+      reports: "${{ parameters.reports_folder }}/**/coverage.cobertura.xml"
+      targetdir: ${{ parameters.reports_folder }} 
+      reporttypes: Cobertura
+      verbosity: Verbose
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: "Cobertura"
+      summaryFileLocation: "${{ parameters.reports_folder }}/Cobertura.xml"                                   
+      failIfCoverageEmpty: ${{ parameters.fail_if_coverage_empty }}
+
+  - task: BuildQualityChecks@8
+    displayName: Check Line Coverage
+    inputs:
+      checkCoverage: true
+      coverageFailOption: "fixed"
+      coverageType: "lines"
+      coverageThreshold: ${{ parameters.line_coverage_threshold }}
+      runTitle: "lines"
+
+  - task: BuildQualityChecks@8
+    displayName: Check Branch Coverage
+    inputs:
+      checkCoverage: false
+      coverageFailOption: "fixed"
+      coverageType: "branches"
+      coverageThreshold: ${{ parameters.branch_coverage_threshold }}
+      runTitle: "branches"
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}'
+      artifact: ${{ parameters.artifact_name }}
+    enabled: ${{ parameters.enabled }}
+
+  # veracode
+  - task: DownloadBuildArtifacts@1
+    displayName: Download Artifacts
+    inputs:
+      artifactName: ${{ parameters.artifact_name }}
+      downloadType: single
+      downloadPath: '$(Agent.BuildDirectory)/${{ parameters.artifact_name }}'
+      allowPartiallySucceededBuilds: false
+      retryDownloadCount: 2
+    enabled: ${{ parameters.enabled }}
+
+  - task: ArchiveFiles@2
+    displayName: Zip files
+    inputs:
+      fileName: ${{ parameters.filename }}
+      archiveType: zip
+      archiveFile: $(Agent.BuildDirectory)/${{ parameters.artifact_name }}/${{ parameters.filename }}
+      rootFolderOrFile: $(Agent.BuildDirectory)/${{ parameters.artifact_name }}/
+      includeRootFolder: false
+    enabled: ${{ parameters.enabled }}
+
+  - task: Veracode.veracode-vsts-build-extension.veracode-scanner-task.Veracode@3
+    displayName: 'Veracode Upload and scan: ${{ parameters.artifact_name }}'
+    inputs:
+      ConnectionDetailsSelection: 'Endpoint'
+      AnalysisService: ${{ parameters.veracode_service_connection }}
+      veracodeAppProfile: '${{ parameters.veracodeAppName }}'
+      version: '${{ parameters.artifact_name }}-$(build.buildNumber)'
+      sandboxName: '${{ parameters.sandboxName }}'
+      createSandBox: '${{ parameters.createsandbox }}'
+      filepath: '$(Agent.BuildDirectory)/${{ parameters.artifact_name }}/${{ parameters.filename }}'
+    enabled: ${{ parameters.VeracodeEnabled }}

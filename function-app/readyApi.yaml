@@ -1,0 +1,8 @@
+parameters:
+  environmentName: ''
+  version: ''
+
+steps:
+- script: |
+    echo "this is readyApi task"
+  displayName: 'Deploy the application'

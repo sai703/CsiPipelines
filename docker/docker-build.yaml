@@ -1,6 +1,5 @@
 ---
 parameters:
-# docker registry 
 - name: container_registry
   type: string
 - name: acr_url
@@ -12,13 +11,8 @@ parameters:
   type: string
 - name: dockerfile_path
   type: string
-- name: tag
-  type: string
-  default: latest
-# risk profile label (i.e., "internal.headless-services.nonpci")
 - name: risk_profile
   type: string
-# twistlock
 - name: twistlock_id
   type: string
 - name: twistlock_password
@@ -37,10 +31,10 @@ steps:
     buildContext: ${{ parameters.build_context }}
     dockerfile: ${{ parameters.dockerfile_path }}
     arguments: --build-arg BuildId=$(Build.BuildId) --label "risk.profile=${{ parameters.risk_profile }} ${{ parameters.build_flags }}"
-    tags: ${{ parameters.tag }}
+    tags: $(Build.BuildNumber)
 - template: ../twistlock/scan.yaml
   parameters:
-    image_with_tag: ${{ parameters.acr_url }}/${{ parameters.docker_repository }}:${{ parameters.tag }}
+    image_with_tag: ${{ parameters.acr_url }}/${{ parameters.docker_repository }}:$(Build.BuildNumber)
     twistlock_project: $(System.TeamProject)
     twistlock_id: ${{ parameters.twistlock_id }}
     twistlock_password: '${{ parameters.twistlock_password }}'
@@ -51,4 +45,4 @@ steps:
     containerRegistry: ${{ parameters.container_registry }}
     repository: ${{ parameters.docker_repository }}
     command: 'push'
-    tags: ${{ parameters.tag }}
+    tags: $(Build.BuildNumber)

@@ -1,6 +1,4 @@
 parameters:
-- name: kubernetes_service_endpoint
-  type: string
 - name: azure_resource_group
   type: string
 - name: kubernetes_cluster
@@ -19,10 +17,14 @@ parameters:
   type: string
 - name: release_name
   type: string
-- name: namespace
+- name: env
+  type: string
+- name: sub_product_name
   type: string
   default: default
 - name: container_image
+  type: string
+- name: client_id
   type: string
 
 steps:
@@ -33,12 +35,12 @@ steps:
 - task: HelmDeploy@0
   displayName: Helm install
   inputs:
-    kubernetesServiceEndpoint: ${{ parameters.kubernetes_service_endpoint }}
+    kubernetesServiceEndpoint: SC-${{ parameters.sub_product_name }}-${{ parameters.env }}
     azureResourceGroup: ${{ parameters.azure_resource_group }}
     kubernetesCluster: ${{ parameters.kubernetes_cluster }}
     command: upgrade
     releaseName: ${{ parameters.release_name }}
-    arguments: --namespace ${{ parameters.namespace }} --set image.repository=${{ parameters.container_image }} 
+    arguments: --namespace ${{ parameters.sub_product_name }}-${{ parameters.env }} --set image.repository=${{ parameters.container_image }} --set env=${{ parameters.env }} --set identity.client_id=${{ parameters.client_id }}
     chartType: FilePath
     chartPath: $(Build.ArtifactStagingDirectory)/${{ parameters.chart_name }}-${{ parameters.chart_version }}.tgz
     connectionType: kubernetesServiceEndpoint

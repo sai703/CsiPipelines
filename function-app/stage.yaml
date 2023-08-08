@@ -1,0 +1,119 @@
+parameters:
+- name: project_file
+  type: object
+
+- name: function_deploy_params
+  type: object
+
+- name: test_azure_subscription
+  type: string
+
+- name: pool
+  type: string
+
+- name: vsts_feed
+  type: string
+  default: ""
+
+- name: client_id
+  type: string
+  default: ""
+
+- name: client_secret
+  type: string
+  default: ""
+
+- name: tenant_id
+  type: string
+  default: ""
+
+- name: dev
+  type: string
+
+- name: qa
+  type: string
+  default: ""
+
+- name: VeracodeEnabled
+  type: boolean
+  
+- name: veracode_service_connection
+  type: string
+
+- name: createsandbox
+  type: boolean
+
+
+stages:
+
+# Builds Function app
+
+- stage: BuildandPublish
+  displayName: Build and Publish
+  pool: ${{ parameters.pool }}
+  jobs:
+    - ${{ each csproj in parameters.project_file }}:
+      - job: ${{ replace(replace(split(csproj.artifact_name, '/')[-1], '-', '_'), '.', '_') }}
+        displayName: Build and publish ${{ csproj.artifact_name }}
+        steps:
+          - template: /dotnet-common/build.yaml@application-pipeline-templates
+            parameters:
+              veracode_service_connection: ${{ parameters.veracode_service_connection }}
+              veracodeAppName: ${{ csproj.veracodeAppName }}
+              project_file: $(Build.SourcesDirectory)/${{ csproj.name}}
+              artifact_name: ${{ csproj.artifact_name }}
+              vsts_feed: ${{ csproj.vsts_feed }}
+              VeracodeEnabled: ${{ parameters.VeracodeEnabled }}
+              sandboxName: ${{ csproj.sandbox }}
+              createsandbox: ${{ parameters.createsandbox}}
+
+
+# Deploys Function app
+
+- ${{ each env in parameters.function_deploy_params }}:
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    - stage: ${{ replace(replace(split(env.environment, '/')[-1], '-', '_'), '.', '_') }}
+      displayName: ${{ env.environment }}
+      jobs:
+      - ${{ each app in env.apps }}:
+        - deployment: Deploy_${{ replace(app.name, '-', '_') }}_${{ env.environment }}
+          displayName: Deploy ${{ app.name }} to ${{ env.environment }}
+          environment: ${{ env.environment }}
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: /function-app/deploy.yaml@application-pipeline-templates
+                    parameters:
+                      artifact_name: ${{ app.artifact_name }}
+                      function_app_name: ${{ app.name }}
+                      azure_subscription: ${{ app.service_connection }}
+                  - ${{ if or(contains(env.environment, parameters.dev), contains(env.environment, parameters.qa)) }}:
+                    - template: /function-app/readyApi.yaml@application-pipeline-templates
+                      parameters:
+                        environmentName: ${{ env.environment }}
+                        version: 1.0.0
+  
+
+  - ${{ if contains(variables['Build.SourceBranch'], 'refs/heads/feature/') }}:
+    - ${{ if contains(env.environment, parameters.dev) }}:
+      - stage: ${{ replace(replace(split(env.environment, '/')[-1], '-', '_'), '.', '_') }}
+        displayName: ${{ env.environment }}
+        jobs:
+        - ${{ each app in env.apps }}:
+          - deployment: Deploy_${{ replace(app.name, '-', '_') }}_${{ env.environment }}
+            displayName: Deploy ${{ app.name }} to ${{ env.environment }}
+            environment: ${{ env.environment }}
+            strategy:
+              runOnce:
+                deploy:
+                  steps:
+                    - template: /function-app/deploy.yaml@application-pipeline-templates
+                      parameters:
+                        artifact_name: ${{ app.artifact_name }}
+                        function_app_name: ${{ app.name }}
+                        azure_subscription: ${{ app.service_connection }}
+                    - template: /function-app/readyApi.yaml@application-pipeline-templates
+                      parameters:
+                        environmentName: ${{ env.environment }}
+                        version: 1.0.0

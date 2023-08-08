@@ -1,0 +1,37 @@
+# File: build-and-deploy-database.yaml
+
+parameters:
+  - name: project_file
+    type: object
+  - name: serverName
+    type: string
+  - name: deployScriptPath
+    type: string
+    default: deploy_script.sql
+  
+  
+stages:
+  - stage: BuildandPublish
+    displayName: Build and Publish
+    jobs:
+    - ${{ each sqlproj in parameters.project_file }}:
+      - job: BuildDatabase_${{ sqlproj.artifact_name }} 
+        displayName: Build and publish ${{ sqlproj.artifact_name }} 
+        steps:
+        - template: /on-prem-database/db-build.yaml@application-pipeline-templates
+          parameters:
+            artifact_name: ${{ sqlproj.artifact_name }}
+            project_file: $(Build.SourcesDirectory)/${{ sqlproj.name }}
+      - job: deploy${{ sqlproj.artifact_name }}     
+        displayName: deploy${{ sqlproj.artifact_name }} 
+        dependsOn: BuildDatabase_${{ sqlproj.artifact_name }} 
+        steps:
+        - template: /on-prem-database/db-deploy.yaml@application-pipeline-templates
+          parameters:
+            artifact_name: ${{ sqlproj.artifact_name }}
+            databaseName: ${{ sqlproj.databaseName }}
+            serverName: ${{ parameters.serverName }}
+            dacpacName: ${{ sqlproj.dacpacName }}
+            xmlName: ${{ sqlproj.xmlName }}
+            
+             

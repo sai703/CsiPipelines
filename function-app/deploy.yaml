@@ -1,15 +1,14 @@
 parameters:
-  - name: function_app_name
-    type: string
-  - name: azure_subscription
-    type: string
-  - name: artifact_name
-    type: string
-  - name: environment
-    type: string
-  - name: manual_validation
-    type: boolean
-    default: false
+- name: function_app_name
+  type: string
+- name: azure_subscription
+  type: string
+  default: ""
+- name: artifact_name
+  type: string
+- name: manual_validation
+  type: boolean
+  default: false
 
 
 steps:
@@ -29,15 +28,9 @@ steps:
       rootFolderOrFile: $(Build.ArtifactStagingDirectory)/
       includeRootFolder: false
   - task: AzureFunctionApp@1
-    displayName: Deploy to ${{ parameters.function_app_name }} to ${{ parameters.environment }}
+    displayName: Deploy function app
     inputs:
       azureSubscription: ${{ parameters.azure_subscription }}
       appType: functionApp
       appName: ${{ parameters.function_app_name }}
       package: $(Build.ArtifactStagingDirectory)/function.zip
-
-
-
-
-
-  

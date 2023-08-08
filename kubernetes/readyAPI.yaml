@@ -1,0 +1,9 @@
+parameters:
+  environmentName: ''
+  version: ''
+  # additional parameters for the template
+
+steps:
+- script: |
+    echo "this is readyApi task"
+  displayName: 'Deploy the application'

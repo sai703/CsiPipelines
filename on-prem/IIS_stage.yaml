@@ -1,0 +1,138 @@
+parameters:
+- name: project_file
+  type: object
+
+- name: vsts_feed
+  type: string
+
+- name: veracode_service_connection
+  type: string
+
+- name: fednow_deploy_params
+  type: object
+
+- name: SQLtestRunnerPath
+  type: string
+
+- name: SQL_projectpath
+  type: string
+
+- name: pool
+  type: string
+
+- name: readyApi_pool
+  type: string
+
+- name: readyApi_poolAgent
+  type: string
+
+- name: VeracodeEnabled
+  type: string
+
+- name: dev
+  type: string
+
+stages:
+- stage: BuildandPublish
+  displayName: Build and Publish
+  jobs:
+    - ${{ each csproj in parameters.project_file }}:
+      - job: build_${{ csproj.artifact_name }}
+        displayName: Build ${{ csproj.artifact_name }}
+        pool: 
+          name: ${{ parameters.pool }}
+        steps:
+          - template: /dotnet-common/build.yaml@application-pipeline-templates
+            parameters:
+              vsts_feed: ${{ parameters.vsts_feed }}
+              artifact_name: ${{ csproj.artifact_name }}
+              project_file: $(Build.SourcesDirectory)/${{ csproj.name}}
+              build_configuration: Build 
+              working_directory: $(Build.SourcesDirectory)
+              reports_folder: $(Common.TestResultsDirectory) 
+              veracodeAppName: ${{ csproj.veracodeAppName }}
+              sandboxName: ${{ csproj.sandboxName }}
+              veracode_service_connection: ${{ parameters.veracode_service_connection }}
+              VeracodeEnabled: ${{ parameters.VeracodeEnabled }}
+  
+- ${{ each env in parameters.fednow_deploy_params }}:
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    - stage: deploy_${{ replace(env.environment, '-', '_') }}
+      displayName: ${{ env.environment }}
+      jobs:
+      - job: nonsqltestcases_${{ replace(env.environment, '-', '_') }}
+        displayName: NON SQL Api Test_${{ env.environment }}
+        pool: 
+          name: ${{ parameters.readyApi_pool }}
+          demands: Agent.Name -equals ${{ parameters.readyApi_poolAgent }}
+        steps:
+        - template: /on-prem/sql_nonprod.yaml@application-pipeline-templates
+          parameters:
+            SQLtestRunnerPath: ${{ parameters.SQLtestRunnerPath }}
+            SQL_projectpath: ${{ parameters.SQL_projectpath }}
+    
+      - deployment: Deploy_${{ replace(env.environment, '-', '_') }}
+        displayName: Deploy ${{ env.environment }}
+        workspace:
+          clean: all
+        environment: 
+          name: ${{ env.environment }}
+          resourceType: VirtualMachine
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - ${{ each web_path in env.webservice_path }}:
+                - template: /on-prem/IIS_deploy.yaml@application-pipeline-templates
+                  parameters:
+                    artifact_name: ${{ web_path.artifact_name }}
+                    webservice_path: ${{ web_path.name }}
+                    IISWebsiteName: ${{ web_path.IISWebsiteName }}
+                    websitePhysicalPath: ${{ web_path.name }}
+                    appPoolName: ${{ web_path.appPoolName }}
+                    appPoolUserName: ${{web_path.appPoolUserName }}
+                    appPoolPassword: ${{ web_path.appPoolPassword }}
+                    hostname: ${{ web_path.hostname }}
+                    targetjsonFiles: ${{ web_path.targetjsonFiles }}
+                    environmentvalue: ${{ web_path.environmentvalue }}
+
+  - ${{ if contains(variables['Build.SourceBranch'], 'refs/heads/feature/') }}:
+    - ${{ if contains(env.environment, parameters.dev) }}:
+      - stage: deploy_${{ replace(env.environment, '-', '_') }}
+        displayName: ${{ env.environment }}
+        jobs:
+        - job: nonsqltestcases_${{ replace(env.environment, '-', '_') }}
+          displayName: NON SQL Api Test_${{ env.environment }}
+          pool: 
+            name: ${{ parameters.readyApi_pool }}
+            demands: Agent.Name -equals ${{ parameters.readyApi_poolAgent }}
+          steps:
+          - template: /on-prem/sql_nonprod.yaml@application-pipeline-templates
+            parameters:
+              SQLtestRunnerPath: ${{ parameters.SQLtestRunnerPath }}
+              SQL_projectpath: ${{ parameters.SQL_projectpath }}
+      
+        - deployment: Deploy_${{ replace(env.environment, '-', '_') }}
+          displayName: Deploy ${{ env.environment }}
+          workspace:
+            clean: all
+          environment: 
+            name: ${{ env.environment }}
+            resourceType: VirtualMachine
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                - ${{ each web_path in env.webservice_path }}:
+                  - template: /on-prem/IIS_deploy.yaml@application-pipeline-templates
+                    parameters:
+                      artifact_name: ${{ web_path.artifact_name }}
+                      webservice_path: ${{ web_path.name }}
+                      IISWebsiteName: ${{ web_path.IISWebsiteName }}
+                      websitePhysicalPath: ${{ web_path.name }}
+                      appPoolName: ${{ web_path.appPoolName }}
+                      appPoolUserName: ${{web_path.appPoolUserName }}
+                      appPoolPassword: ${{ web_path.appPoolPassword }}
+                      hostname: ${{ web_path.hostname }}
+                      targetjsonFiles: ${{ web_path.targetjsonFiles }}
+                      environmentvalue: ${{ web_path.environmentvalue }}

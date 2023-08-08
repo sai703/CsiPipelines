@@ -1,0 +1,134 @@
+parameters:
+- name: artifact_name
+  type: string
+
+- name: webservice_path
+  type: string
+
+- name: IISWebsiteName
+  type: string
+
+- name: websitePhysicalPath
+  type: string
+
+- name: appPoolName
+  type: string
+
+- name: appPoolUserName
+  type: string
+
+- name: appPoolPassword
+  type: string
+
+- name: hostname
+  type: string
+
+- name: targetjsonFiles
+  type: string
+
+- name: environmentvalue
+  type: string
+
+steps:
+
+# Deploy
+
+  - powershell: Write-Host "##vso[task.setvariable variable=ASPNETCORE_ENVIRONMENT]${{ parameters.environmentvalue }}"
+    displayName: Set ASPNETCORE_ENVIRONMENT Variable
+
+  - task: IISWebAppManagementOnMachineGroup@0
+    displayName: Stop AppPool
+    inputs:
+      WebsiteName: ${{ parameters.IISWebsiteName }}
+      IISDeploymentType: 'IISApplicationPool'
+      ActionIISApplicationPool: 'StopAppPool'
+      StartStopRecycleAppPoolName: ${{ parameters.appPoolName }}
+      continueOnError: true #need to be a boolean param
+
+  - task: IISWebAppManagementOnMachineGroup@0
+    displayName: 'Manage IISWebsite'
+    inputs:
+      WebsiteName: ${{ parameters.IISWebsiteName }}
+      WebsitePhysicalPath: ${{ parameters.websitePhysicalPath }}
+      CreateOrUpdateAppPoolForWebsite: true
+      AppPoolNameForWebsite: ${{ parameters.appPoolName }}
+      DotNetVersionForWebsite: 'No Managed Code'
+      ConfigureAuthenticationForWebsite: true
+      AppPoolIdentityForWebsite: SpecificUser
+      AppPoolUsernameForWebsite: ${{ parameters.appPoolUserName }}
+      AppPoolPasswordForWebsite: ${{ parameters.appPoolPassword }}
+      AnonymousAuthenticationForWebsite: true
+      WindowsAuthenticationForWebsite: false
+
+  - task: DownloadBuildArtifacts@1
+    displayName: Download Artifacts
+    inputs:
+        artifactName: ${{ parameters.artifact_name }}
+        downloadType: single
+        downloadPath: $(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}/
+        allowPartiallySucceededBuilds: false
+        retryDownloadCount: 2
+
+  - task: FileTransform@1
+    displayName: 'Transform web.config'
+    inputs:
+      folderPath: '$(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}'
+      enableXmlTransform: true
+      xmlTransformationRules: '-transform web.config -xml web.config'
+      fileType: xml
+
+  - task: FileTransform@1
+    displayName: 'Transform appsettings.json'
+    inputs:
+      folderPath: '$(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}'
+      fileType: json
+      targetFiles: ${{ parameters.targetjsonFiles }}
+      appPoolName: ${{ parameters.appPoolName }}
+      appPoolUserName: ${{ parameters.appPoolUserName }}
+      appPoolPassword: ${{ parameters.appPoolPassword }}
+      websiteName: ${{ parameters.IISWebsiteName }}
+      websitePhysicalPath: ${{ parameters.websitePhysicalPath }}
+      bindings: | 
+        {
+          "bindings": [
+            {
+              "protocol":"http",
+              "ipAddress":"All Unassigned",
+              "port":"80",
+              "hostname":${{ parameters.hostname }},
+              "sslThumbprint":"",
+              "sniFlag":false
+            }
+          ]
+        }
+      additionalAppCmdCommands: |
+        set config -section:system.applicationHost/applicationPools /+"[name= ${{ parameters.IISWebsiteName }}].environmentVariables.[name='foo',value='bar']" /commit:apphost
+
+  - powershell: |
+      Start-Sleep -s 30
+    displayName: 'PowerShell Script Pause'
+
+  - task: CopyFiles@2
+    displayName: 'Copy files to IIS server'
+    inputs:
+      SourceFolder: '$(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}'
+      TargetFolder: ${{ parameters.webservice_path }}
+      CleanTargetFolder: true
+      OverWrite: true
+
+  - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+    displayName: 'Replace tokens in Web config'
+    inputs:
+      rootDirectory: ${{ parameters.websitePhysicalPath }}
+      targetFiles: Web.config
+      tokenPrefix: "#{"
+      tokenSuffix: "}#"
+      emptyValueBehavior: 'KeepToken'
+  
+  - task: IISWebAppManagementOnMachineGroup@0
+    displayName: Start AppPool
+    inputs:
+      WebsiteName: ${{ parameters.IISWebsiteName }}
+      IISDeploymentType: 'IISApplicationPool'
+      ActionIISApplicationPool: 'StartAppPool'
+      StartStopRecycleAppPoolName: ${{ parameters.appPoolName }}

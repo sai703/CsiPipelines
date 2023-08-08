@@ -1,0 +1,54 @@
+parameters:
+- name: project_file
+  type: string
+
+- name: buildConfiguration
+  type: string
+  default: 'Release'
+
+- name: buildPlatform
+  type: string
+  default: 'Any CPU'
+
+- name: workingDirectory
+  type: string
+  default: $(Build.SourcesDirectory)
+
+- name: artifact_name
+  type: string
+- name: enabled
+  type: string
+  default: true
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 10
+
+  - task: MSBuild@1
+    displayName: 'Build Database Project'
+    inputs:
+      solution: '${{ parameters.workingDirectory }}\**\*.sqlproj'
+      platform: '${{ parameters.buildPlatform }}'
+      configuration: '${{ parameters.buildConfiguration }}'
+      maximumCpuCount: true 
+
+
+  - task: CopyFiles@2
+    displayName: 'Copy DACPAC and Publish Profile to Artifact Staging Directory'
+    inputs:
+      SourceFolder: '${{ parameters.workingDirectory }}'
+      Contents: |
+        **\bin\**\*.dacpac
+        **\*.publish.xml
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/'
+      flattenFolders: true
+
+
+  - publish: '$(build.artifactstagingdirectory)'
+    artifact: ${{ parameters.artifact_name }}
+
+ 
+ 
+
+  

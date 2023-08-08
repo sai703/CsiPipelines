@@ -1,0 +1,21 @@
+parameters:
+- name: SQLtestRunnerPath
+  type: string
+
+- name: SQL_projectpath
+  type: string
+
+steps:
+
+- script: '"${{ parameters.SQLtestRunnerPath }}" "${{ parameters.SQL_projectpath }}" -f$(Common.TestResultsDirectory) "-RJUnit-Style HTML Report" -FXML -accessKey "2606529f-7b9c-4477-b5ce-5dc40b0daf3c" -x $(project.Password)'
+  displayName: 'NON SQL Tests'
+  continueOnError: true
+  timeoutInMinutes: 1000
+  retryCountOnTaskFailure: 5
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results '
+  inputs:
+    testResultsFiles: '**\*.xml'
+    searchFolder: '$(Common.TestResultsDirectory)'
+  condition: succeededOrFailed()

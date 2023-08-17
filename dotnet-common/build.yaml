@@ -87,6 +87,16 @@ parameters:
   type: boolean
   default: false
 
+- name: funcapp_platform
+  type: string
+  default: 'win-x64'
+
+- name: runtime_params
+  type: string
+  default: '--self-contained'
+
+
+
 
 # Build Publish
 steps:
@@ -112,11 +122,10 @@ steps:
       includePreviewVersions: true
       
   - task: DotNetCoreCLI@2
-    displayName: publish
+    displayName: dotnet build
     inputs:
       command: "build"
       projects: ${{ parameters.project_file }}
-      arguments: "-o \"$(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}\" ${{ parameters.publish_flags }}"
       feedsToUse: 'select'
       vstsFeed: ${{ parameters.vsts_feed }}
       includeNuGetOrg: true
@@ -164,6 +173,16 @@ steps:
       coverageType: "branches"
       coverageThreshold: ${{ parameters.branch_coverage_threshold }}
       runTitle: "branches"
+
+  - task: DotNetCoreCLI@2
+    displayName: dotnet publish
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      projects: '${{ parameters.project_file }}'
+      arguments: '-r ${{ parameters.funcapp_platform }} ${{ parameters.runtime_params }} --configuration ${{ parameters.build_configuration }} --output $(Build.ArtifactStagingDirectory)/${{ parameters.artifact_name }}'
+      zipAfterPublish: false
+      modifyOutputPath: false
 
   - task: PublishPipelineArtifact@1
     inputs:

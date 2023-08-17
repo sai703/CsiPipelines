@@ -34,3 +34,4 @@ steps:
       appType: functionApp
       appName: ${{ parameters.function_app_name }}
       package: $(Build.ArtifactStagingDirectory)/function.zip
+      deploymentMethod: 'zipDeploy'

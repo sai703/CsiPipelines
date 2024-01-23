@@ -1,0 +1,58 @@
+trigger:
+  - none
+
+pool: vmss-agents-linux-nonprod-centralus
+
+resources:
+  repositories:
+    - repository: databackup-pipeline
+      type: git
+      name: EBG DevOps/databackup-pipeline
+      ref: feature/298723/azure-Key-Vault-Keys
+variables:
+  - group: CSI-BackupResilience
+parameters:
+  - name: subscriptionId
+    type: string
+    default: cdb3fddb-b5e9-4f51-a44e-02b2ca34f5db
+
+  - name: ResourceGroupName
+    type: string
+    default: BackupResilience
+
+  - name: StorageAccountName
+    type: string
+    default: azurebackuprestoredev
+
+  - name: ContainerName
+    type: string
+    default: backupcontainerdev
+
+  - name: Action
+    type: string
+    default: "BackupAppConfig"
+    values:
+      - BackupAppConfig
+      - RestoreAppConfig
+
+  - name: appconfigName
+    type: string
+    default: appconfig-ebg-ids-configapi-nonprod-centralus
+  - name: ZipFileName
+    type: string
+    default: "095f7a7c-a551-45bc-a82d-5d6ba45f61b0/AppConfigs/appconfig-ebg-ids-configapi-nonprod-centralus/appconfig-ebg-ids-configapi-nonprod-centralus_backup_2023-09-12_04-29-40.zip"
+  - name: KeysToRestore
+    type: string
+    default: "$null"
+  - name: TenantId
+    type: string
+    default: "350118a2-b385-443c-a3d3-440dd3c3fde1"
+
+steps:
+  - task: AzurePowerShell@5 # AzureCLI@2
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      scriptType: "FilePath"
+      scriptPath: "BackupResilience/AzureAppConfiguration/appconfig_BackupRestore.ps1"
+      ScriptArguments: '-SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.ContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -ZipFileName "${{ parameters.ZipFileName }}" -KeysToRestore  "${{ parameters.KeysToRestore }}" -appconfigName  "${{ parameters.appconfigName }}" -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)" -TenantId "${{ parameters.TenantId }}" -Action "${{ parameters.Action }}"'
+      azurePowerShellVersion: "LatestVersion"

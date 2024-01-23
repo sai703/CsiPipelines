@@ -1,0 +1,217 @@
+
+trigger:
+  - none
+
+pool: vmss-agents-linux-nonprod-centralus
+
+resources:
+  repositories:
+    - repository: databackup-pipeline
+      type: git
+      name: EBG DevOps/databackup-pipeline
+      ref: feature/298723/azure-Key-Vault-Keys
+variables:
+  - group: CSI-BackupResilience
+parameters:
+  - name: SubscriptionId
+    type: string
+    default: cdb3fddb-b5e9-4f51-a44e-02b2ca34f5db
+  - name: ResourceGroupName
+    type: string
+    default: BackupResilience
+  - name: StorageAccountName
+    type: string
+    default: azurebackuprestoredev
+  - name: StorageContainerName
+    type: string
+    default: backupcontainerdev
+  - name: Action
+    type: string
+    default: "BackupKeys"
+    values:
+      - BackupAll
+      - RestoreAll
+      - BackupKeys
+      - BackupSecrets
+      - BackupCerts
+      - RestoreKeys
+      - RestoreSecrets
+      - RestoreCerts
+
+  - name: KeyVaultName
+    type: string
+    default: keyvaultrestoration1
+  - name: ZipFileName
+    type: string
+    default: "ec864827-a91d-4a4b-bdec-b367150f43fa/KeyVault/keys/keyvaultrestoration1_Keys_backup_2023-08-02_14-01-00.zip"
+  - name: KeysToRestore
+    type: string
+    default: "$null"
+  - name: TenantId
+    type: string
+    default: "350118a2-b385-443c-a3d3-440dd3c3fde1"
+
+steps:
+  - task: AzurePowerShell@5
+    name: "BackupKeys"
+    displayName: "Backup Keys"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'BackupKeys') {
+           $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\keys_BackupRestore.ps1"
+           Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+          . $scriptPath -SubscriptionId  "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -Keys '' -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)" -TenantId "${{ parameters.TenantId }}"  -Action "${{ parameters.Action }}" -vaultName "${{ parameters.KeyVaultName }}"
+            Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+        } 
+        Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+  - task: AzurePowerShell@5
+    name: "BackupSecrets"
+    displayName: "Backup Secrets"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'BackupSecrets') {
+           $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\secrets_BackupRestore.ps1"
+           Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+           . $scriptPath -SubscriptionId  "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -TenantId "${{ parameters.TenantId }}" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)"  -Action "${{ parameters.Action }}" -vaultName "${{ parameters.KeyVaultName }}"
+           Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+         } else {
+           Write-Host "BackupSecrets task is skipped because Action is not BackupSecrets."
+         }
+  - task: AzurePowerShell@5
+    name: "BackupCerts"
+    displayName: "Backup Certificates"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'BackupCerts') {
+           $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\certificates_BackupRestore.ps1"
+           Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+           . $scriptPath -SubscriptionId  "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -TenantId "${{ parameters.TenantId }}" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)"  -Action "${{ parameters.Action }}" -vaultName "${{ parameters.KeyVaultName }}" 
+           Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+         } else {
+           Write-Host "BackupCerts task is skipped because Action is not BackupSecrets."
+         }
+  - task: AzurePowerShell@5
+    name: "BackupAll"
+    displayName: "Backup all Key Vault items i.e. Keys, Secrets and Certificates"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'BackupAll') {
+          $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\keys_BackupRestore.ps1"
+            Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+            . $scriptPath -SubscriptionId  "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -TenantId "${{ parameters.TenantId }}" -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)" -Action "BackupKeys" -vaultName "${{ parameters.KeyVaultName }}"
+
+            $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\certificates_BackupRestore.ps1"
+            Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+            . $scriptPath -SubscriptionId  "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -TenantId "${{ parameters.TenantId }}" -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)" -Action "BackupCerts" -vaultName "${{ parameters.KeyVaultName }}"
+
+            $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\secrets_BackupRestore.ps1"
+            Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+            . $scriptPath -SubscriptionId  "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}" -resourceGroupName "${{ parameters.ResourceGroupName }}" -TenantId "${{ parameters.TenantId }}" -AZURE_SP_CLIENT_SECRET "$(AZURE_SP_CLIENT_SECRET)" -AZURE_SP_CLIENT_ID "$(AZURE_SP_CLIENT_ID)" -Action "BackupSecrets" -vaultName "${{ parameters.KeyVaultName }}"
+            Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+        } else {
+          Write-Host "BackupAll task is skipped because Action is not BackupAll."
+        }
+  - task: AzurePowerShell@5
+    name: "RestoreKeys"
+    displayName: "Restore Keys"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'RestoreKeys') {
+          $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\keys_BackupRestore.ps1"
+          Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+          . $scriptPath -SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}"  -resourceGroupName "${{ parameters.ResourceGroupName }}"  -Action "RestoreKeys"  -vaultName "${{ parameters.KeyVaultName }}" -KeysToRestore  "${{ parameters.KeysToRestore }}" -zipFileName  "${{ parameters.ZipFileName }}"   
+          Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+        } else {
+          Write-Host "RestoreKeys task is skipped because Action is not RestoreKeys."
+        }
+  - task: AzurePowerShell@5
+    name: "RestoreCerts"
+    displayName: "Restore Certs"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'RestoreCerts') {
+          $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\certificates_BackupRestore.ps1"
+          Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+          . $scriptPath -SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}"  -resourceGroupName "${{ parameters.ResourceGroupName }}" -CertsToRestore  "${{ parameters.KeysToRestore }}" -zipFileName  "${{ parameters.ZipFileName }}" -vaultName "${{ parameters.KeyVaultName }}" -Action "RestoreCerts"  
+          Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+        } else {
+          Write-Host "Restore Certificate task is skipped because Action is not RestoreCerts."
+        }
+
+  - task: AzurePowerShell@5
+    name: "RestoreSecrets"
+    displayName: "Restore Secrets"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'RestoreSecrets') {
+          $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\secrets_BackupRestore.ps1"
+          Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+          . $scriptPath -SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}"  -resourceGroupName "${{ parameters.ResourceGroupName }}"   -SecretsToRestore  "${{ parameters.KeysToRestore }}" -zipFileName  "${{ parameters.ZipFileName }}" -vaultName "${{ parameters.KeyVaultName }}" -Action "RestoreSecrets"
+          Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+        } else {
+          Write-Host "Restore Secrets task is skipped because Action is not RestoreSecrets."
+        }
+
+  - task: AzurePowerShell@5
+    name: "RestoreAll"
+    displayName: "Restore all Key Vault items i.e. Keys, Secrets and Certificates"
+    inputs:
+      azureSubscription: "CSI DevOps Sandbox(3)(ec864827-a91d-4a4b-bdec-b367150f43fa)"
+      azurePowerShellVersion: "LatestVersion"
+      ScriptType: "InlineScript"
+      Inline: |
+        if ("${{ parameters.Action }}" -eq 'RestoreAll') {
+          $filePaths = "${{ parameters.ZipFileName }}" -split "#"
+          Write-Host $filePaths
+          foreach ($filePath in $filePaths) {
+            if ($filePath | Select-String -Pattern "keys") {
+              $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\keys_BackupRestore.ps1"
+              Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+              . $scriptPath -SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}"  -resourceGroupName "${{ parameters.ResourceGroupName }}"  -Action "RestoreKeys"  -vaultName "${{ parameters.KeyVaultName }}" -KeysToRestore  "${{ parameters.KeysToRestore }}" -zipFileName  "$filePath" 
+            } elseif ($filePath | Select-String -Pattern "secrets") {
+                $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\secrets_BackupRestore.ps1"
+                Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+                . $scriptPath -SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}"  -resourceGroupName "${{ parameters.ResourceGroupName }}" -SecretsToRestore  "${{ parameters.KeysToRestore }}" -zipFileName  "$filePath"  -vaultName "${{ parameters.KeyVaultName }}" -Action "RestoreSecrets"
+              } elseif ($filePath | Select-String -Pattern "Certificates") {
+                $scriptPath = "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault\certificates_BackupRestore.ps1"
+                Set-Location -Path "$(Build.SourcesDirectory)\BackupResilience\AzureKeyVault"
+                . $scriptPath -SubscriptionId "${{ parameters.SubscriptionId }}" -storageAccountName "${{ parameters.StorageAccountName }}" -storageContainerName "${{ parameters.StorageContainerName }}"  -resourceGroupName "${{ parameters.ResourceGroupName }}" -CertsToRestore  "${{ parameters.KeysToRestore }}" -zipFileName  "$filePath" -vaultName "${{ parameters.KeyVaultName }}" -Action "RestoreCerts"  
+              }
+          }
+          Write-Output "##vso[task.setvariable variable=AllMessages]$AllMessages" # Set the AllMessages variable as an output variable
+        } else {
+          Write-Host "RestoreAll task is skipped because Action is not RestoreAll."
+        }
+
+        
+
+  - task: PowerShell@2
+    displayName: "Zip Files List"
+    inputs:
+      targetType: "inline"
+      script: |
+        $AllMessages = "$(AllMessages)"  # Retrieve the output variable
+        $AllMessagesWithNewLines = $AllMessages -replace "(?<=\.zip)", "`n"  # Add new lines after each ".zip" occurrence
+        Write-Host "Zip Files:"
+        Write-Host $AllMessagesWithNewLines
